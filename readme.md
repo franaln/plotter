@@ -12,6 +12,7 @@ Plotter readme
 or
 
 ```make```
+
 ```make install``` (this will put the plotter binary in the usual place: /usr/bin)
 
 
