@@ -11,7 +11,7 @@
 #include "plotter.h"
 
 #define NAME    "plotter"
-#define VERSION "0.4-dev"
+#define VERSION "0.4"
 
 void show_usage()
 {

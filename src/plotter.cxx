@@ -1,4 +1,5 @@
-/* plotter : plotter.cxx */
+/** @file plotter.cxx
+*/
 
 #include "plotter.h"
 
