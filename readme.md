@@ -1,9 +1,10 @@
-Plotter readme
-==============
+Plotter
+=======
 
 ## Dependencies
 
 * [ROOT](http://root.cern.ch) 5.28 or higher
+
 
 ## Install
 
@@ -19,6 +20,7 @@ or
 If you are using bash, you can install the bash completion file doing this:
 
     cp extra/plotter_completion /etc/bash_completion.d/plotter
+
 
 ## Usage
 

@@ -46,7 +46,7 @@ using namespace std;
 //plotter
 #include "base.h"
 #include "item.h"
-#include "filebox.h"
+#include "itemsbox.h"
 #include "macro.h"
 
 enum MenuId {
@@ -90,7 +90,7 @@ class Plotter : public TGMainFrame {
 
   // Slots (must be public!)
   void OnItemClick(Int_t);
-  void OnItemDoubleClick(TGFrame*, Int_t);  
+  void OnItemDoubleClick(TGFrame*, Int_t);
   void OnButtonClearSelection();
   void OnButtonDraw();
   void OnButtonDrawEfficiency();
@@ -121,42 +121,42 @@ class Plotter : public TGMainFrame {
   TGColorSelect      *colorselect[20];
   TGCheckButton      *checkFill[20];
 
-  FileBox            *fb[15];
+  ItemsBox *fb[15];
 
   //-- fns
-  void        	      CreateMainWindow();
-  void        	      CreateMainFrame();
-  void        	      CreateOptionsFrame();
-  void        	      CreateMenuBar();  
-  void        	      CreateStatusBar();  
-  void        	      CreateColoursFrame();
-  void        	      CreateCutsEntry();
+  void                CreateMainWindow();
+  void                CreateMainFrame();
+  void                CreateOptionsFrame();
+  void                CreateMenuBar();
+  void                CreateStatusBar();
+  void                CreateColoursFrame();
+  void                CreateCutsEntry();
   void                CreateMergedFileBox();
-  Bool_t      	      ProcessMessage(Long_t msg, Long_t parm1, Long_t); 
-  void        	      Exit();
-  void        	      ExitError();
-  void        	      Action(int, int);
-  void        	      ClearSelection();
-  Int_t       	      SaveCanvases();
-  void        	      CloseWindow();
-  void        	      LoadSettings();
-  void        	      SaveSettings();
+  Bool_t              ProcessMessage(Long_t msg, Long_t parm1, Long_t);
+  void                Exit();
+  void                ExitError();
+  void                Action(int, int);
+  void                ClearSelection();
+  Int_t               SaveCanvases();
+  void                CloseWindow();
+  void                LoadSettings();
+  void                SaveSettings();
   TGraphAsymmErrors*  CreateEfficiency();
   TH1*                CreateRatio(int index_first = 1, int index_last = 0, bool down = false);
   TH1*                CreateRelativeDiff(int index_first = 1, int index_last = 0, bool down = false);
-  void      	      GetColours();
-  Color_t   	      ConvertStringToColour(const char *c);
+  void                GetColours();
+  Color_t             ConvertStringToColour(const char *c);
   void                SetStyle();
   void                CreatePlotList();
   void                CreateSelList();
-  void      	      ConfigurePlotList();
-  void      	      Draw(Plot::Type);
-  void      	      PlotHistos();
-  void      	      PlotGraphs();
-  bool      	      PlotRatios(bool down = false);
-  bool      	      PlotRelativeDiffs(bool down = false);
-  bool      	      PlotEfficiency();
-  void      	      PlotLegend(Plot::Type);
+  void                ConfigurePlotList();
+  void                Draw(Plot::Type);
+  void                PlotHistos();
+  void                PlotGraphs();
+  bool                PlotRatios(bool down = false);
+  bool                PlotRelativeDiffs(bool down = false);
+  bool                PlotEfficiency();
+  void                PlotLegend(Plot::Type);
   vector<int>         GetNumberOfObjectsInEachFile();
   void                BeginMacro();
   void                ResetMacro();
@@ -173,11 +173,11 @@ class Plotter : public TGMainFrame {
   Double_t              x_min, x_max, y_min, y_max;
   Pixel_t               pcolors[20];
   Color_t               colours[20];
-  TStyle    	        *plotter_style;
-  short     	        marker_style;
-  float     	        marker_size;
-  short     	        line_width;
-  Macro     	        *macro;
+  TStyle                *plotter_style;
+  short                 marker_style;
+  float                 marker_size;
+  short                 line_width;
+  Macro                 *macro;
   TChain                *merge_chain;
 
  protected:

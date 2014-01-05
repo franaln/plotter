@@ -1,7 +1,7 @@
 /* plotter : filebox.h */
 
-#ifndef FILEBOX_H
-#define FILEBOX_H
+#ifndef ITEMSBOX_H
+#define ITEMSBOX_H
 
 #include <iostream>
 using namespace std;
@@ -21,11 +21,11 @@ using namespace std;
 #define MSG(x) cout << ":: " << x << endl;
 #define ERROR(x,y) cout << "Error in <Plotter::" << x << ">: " << y << endl;
 
-class FileBox  : public TGVerticalFrame {
+class ItemsBox  : public TGVerticalFrame {
 
 public:
-  FileBox(TGWindow *main, UInt_t w, UInt_t h, Int_t _ncolumn);
-  virtual ~FileBox();
+  ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t _ncolumn);
+  virtual ~ItemsBox();
 
 
   void        AddFile(TString);
@@ -35,7 +35,7 @@ public:
   TFile*      GetFile() { return file; };
   TDirectory* GetCurrentDir()  { return file->GetDirectory(current_path); };
   TTree*      GetCurrentTree() {  return (TTree*)file->Get(current_path); };
-  
+
   void Clear();
 
   //slot
@@ -50,7 +50,7 @@ public:
   void     BrowseTree(TString name);
   void     GoBack();
   void     ShowItems();
-  TString  GetFilenameFromPath(TString);  
+  TString  GetFilenameFromPath(TString);
 
   Int_t            n;
   vector<TString>  filenames;
@@ -60,9 +60,9 @@ public:
   TString last_path, current_path;
 
   //gui
-  TGTextEntry      *header;
-  TGListBox        *content;
+  TGTextEntry *header;
+  TGListBox *content;
 
-  ClassDef(FileBox, 0);
+  ClassDef(ItemsBox, 0);
 };
 #endif

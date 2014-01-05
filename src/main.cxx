@@ -1,37 +1,37 @@
-/* 
-   Plotter
-   -------
+/**
+   @file main.cxx
+   @brief Plotter is a gui interface to easily plot ROOT histograms, graphs and trees..
+   @author Francisco Alonso <franaln@gmail.com>
+   @version 0.4
 
-   Plotter is a gui interface to easily plot ROOT histograms, graphs and trees..
-   Francisco Alonso <franaln@gmail.com> 
+   @mainpage plotter
+   @brief GUI interface to easily plot ROOT histograms, trees or graphs
 */
 
 #include "plotter.h"
 
-#define VERSION "0.3.2-dev"
+#define NAME    "plotter"
+#define VERSION "0.4-dev"
 
-void ShowUsage()
+void show_usage()
 {
-  cout << endl;
-  cout << "Plotter " << VERSION << endl;
-  cout << endl;
-  cout << "Usage: plotter [options] file1.root file2.root file3.root ..." << endl;
-  cout << "Options:" << endl;
-  cout << "   --merge (-m)            merge input files (create a chain)" << endl;
-  cout << endl;
+  std::cout << NAME << " " << VERSION << std::endl;
+  std::cout << std::endl;
+  std::cout << "Usage: " << NAME << " [options] file1.root file2.root file3.root ..." << std::endl;
+  std::cout << std::endl;
 }
 
 int main(int argc, char **argv)
 {
-  
+
   if (gROOT->IsBatch()) {
     fprintf(stderr, "%s: cannot run in batch mode\n", argv[0]);
     return 1;
   }
-  
-  // Si no hay argumentos --> show version/usage
+
+  // If no arguments: show version/usage
   if(argc < 2 || strcmp("-h",argv[1])==0 || strcmp("--help",argv[1])==0 ){
-    ShowUsage();
+    show_usage();
     return 1;
   }
 
@@ -42,26 +42,27 @@ int main(int argc, char **argv)
   if ( strcmp(argv[argpos], "--merge")==0 || strcmp(argv[argpos], "-m")==0) {
     merge = true;
     argpos++;
-    if(argc <= argpos) { ShowUsage(); return 1; }
+    if(argc <= argpos) {
+      show_usage();
+      return 1;
+    }
   }
 
   // Get files from args
-  vector<TString> files;    
+  vector<TString> files;
   for (int i = argpos; i < argc; i++){
     TString tmp = argv[i];
     files.push_back(tmp);
   }
-  
+
   // Application
   TApplication *rootApp = new TApplication("Plotter", &argc, argv);
 
-  cout << "--------------" << endl;
-  cout << "|  Plotter   |" << endl;
-  cout << "--------------" << endl;
-  
+  cout << "[plotter]" << endl;
+
   Plotter p(files, merge);
-  
+
   rootApp->Run();
-  
+
   return 0;
 }
