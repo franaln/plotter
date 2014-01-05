@@ -1,24 +1,25 @@
-/* plotter : item.cxx */
+/** @file item.cxx
+*/
 
 #include "item.h"
 
-Item::Item(Int_t _nfile, Int_t _nentry, TString _name, TString _title, ItemType _type) :
-  nfile(_nfile),
-  nentry(_nentry),
-  name(_name),
-  title(_title),
-  type(_type),
-  status(false)
+Item::Item(Int_t file, Int_t entry, TString name, TString title, ItemType type) :
+  m_file(file),
+  m_entry(entry),
+  m_name(name),
+  m_title(title),
+  m_type(type),
+  m_status(false)
 {
 
   // Calcula id
-  // file = id/100000-1 
+  // file = id/100000-1
   // entry = id-((id/100000)*100000)
-  id = 100000 * (nfile + 1) + nentry;
+  m_id = 100000 * (m_file + 1) + m_entry;
 
 }
 
-Item::~Item() 
+Item::~Item()
 {
 
 }
@@ -27,32 +28,30 @@ const TGPicture* Item::GetIcon()
 {
   const TGPicture *iconpic;
 
-  if(type == H1){
+  if(m_type == Hist1D){
     iconpic = gClient->GetPicture("h1_t.xpm");
   }
-  else if(type == H2){
+  else if(m_type == Hist2D){
     iconpic = gClient->GetPicture("h2_t.xpm");
   }
-  else if(type == H3){
+  else if(m_type == Hist3D){
     iconpic = gClient->GetPicture("h3_t.xpm");
   }
-  else if(type == Graph){
+  else if(m_type == Graph){
     iconpic = gClient->GetPicture("graph.xpm");
   }
-  else if(type == Branch){
+  else if(m_type == Branch){
     iconpic = gClient->GetPicture("leaf_t.xpm");
   }
-  else if(type == Dir){
+  else if(m_type == Dir){
     iconpic = gClient->GetPicture("folder_t.xpm");
   }
-  else if(type == Tree){
+  else if(m_type == Tree){
     iconpic = gClient->GetPicture("tree_t.xpm");
   }
-  else if(type == Back){
+  else if(m_type == Back){
     iconpic = gClient->GetPicture("folder_t.xpm");
   }
 
   return iconpic;
 }
-
-

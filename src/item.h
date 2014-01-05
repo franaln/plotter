@@ -11,55 +11,58 @@
 #include <TGPicture.h>
 #include <TGResourcePool.h>
 
-#include "base.h"
+#include "common.h"
 
 typedef enum{
-  Dir, Tree, 
-  H1, H2, H3, 
-  Branch, Graph, 
-  Back, None
+  Dir,
+  Tree,
+  Hist1D,
+  Hist2D,
+  Hist3D,
+  Branch,
+  Graph,
+  Back,
+  None
 } ItemType;
 
 
 class Item {
-  
+
  private:
-  Int_t     nfile;
-  Int_t     nentry;
-  TString   name;
-  TString   title;
-  TString   path;
-  ItemType  type;
-  Bool_t    status;
-  Int_t     id;
-  
+  Int_t     m_file;
+  Int_t     m_entry;
+  TString   m_name;
+  TString   m_title;
+  TString   m_path;
+  ItemType  m_type;
+  Bool_t    m_status;
+  Int_t     m_id;
+
  public:
-  Item(Int_t _nfile, Int_t _nentry, TString _name, TString _title, ItemType _type);
+  Item(Int_t file, Int_t entry, TString name, TString title, ItemType type);
   virtual ~Item();
-  
-  TString       GetName()    { return name; }
-  TString       GetTitle()   { return title; }
-  TString       GetText()    { return name.EqualTo("") ? "(no name)" : name; }
-  TString       GetLegendText() { return title.EqualTo("") ? name : title; }
-  ItemType      GetType()    { return type; };
-  Bool_t        GetStatus()  { return status; }
-  Int_t         GetId()      { return id; }
-  Int_t         GetFile()    { return nfile; };
-  Int_t         GetEntry()   { return nentry; };
-  
+
+  TString GetName() { return m_name; }
+  TString GetTitle() { return m_title; }
+  TString GetText() { return m_name.EqualTo("") ? "no name" : m_name; }
+  TString GetLegendText() { return m_title.EqualTo("") ? m_name : m_title; }
+  ItemType GetType() { return m_type; };
+  Bool_t GetStatus() { return m_status; }
+  Int_t GetId() { return m_id; }
+  Int_t GetFile() { return m_file; };
+  Int_t GetEntry(){ return m_entry; };
   const TGPicture* GetIcon();
 
-  Bool_t IsDir()       { return type==Dir ? true : false; }
-  Bool_t IsTree()      { return type==Tree ? true : false; }
-  Bool_t IsBack()      { return type==Back ? true : false; }
-  Bool_t IsPlotable()  { return (type==H1 || type==H2 || type==H3 || type==Graph || type==Branch) ? true : false; }
-  Bool_t IsBranch()    { return type==Branch ? true : false; }      
-  Bool_t IsTypeHist()  { return (type==H1 || type==H2 || type==H3 || type==Branch) ? true : false; }
-  Bool_t IsTypeGraph() { return type==Graph ? true : false; }
+  bool IsDir() { return m_type == Dir ? true : false; }
+  bool IsTree() { return m_type == Tree ? true : false; }
+  bool IsBack() { return m_type == Back ? true : false; }
+  bool IsPlotable() { return (m_type == Hist1D || m_type==Hist2D || m_type == Hist3D || m_type == Graph || m_type == Branch) ? true : false; }
+  bool IsBranch() { return m_type == Branch ? true : false; }
+  bool IsTypeHist() { return (m_type == Hist1D || m_type == Hist2D || m_type == Hist3D || m_type == Branch) ? true : false; }
+  bool IsTypeGraph() { return m_type == Graph ? true : false; }
 
-  void     ToggleStatus() { status = status ? false : true; }
-  void     SetStatus(bool st)    { status = st; }
+  void ToggleStatus() { m_status = m_status ? false : true; }
+  void SetStatus(bool st) { m_status = st; }
 };
 
 #endif
-

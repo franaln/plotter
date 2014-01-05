@@ -1,12 +1,13 @@
-/* plotter : filebox.cxx */
+/** @file filebox.cxx
+*/
 
 #include "itemsbox.h"
 
 ClassImp(ItemsBox);
 
-ItemsBox::ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t _ncolumn) :
+ItemsBox::ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t column) :
   TGVerticalFrame(main, w, h, kVerticalFrame),
-  n(_ncolumn)
+  n(column)
 {
   SetCleanup(kDeepCleanup);
 
@@ -24,7 +25,6 @@ ItemsBox::~ItemsBox()
 
 void ItemsBox::CreateGui(TString header_text)
 {
-
   // header
   header = new TGTextEntry(this, header_text, 0);
   AddFrame(header, new TGLayoutHints(kLHintsLeft | kLHintsTop |
@@ -55,9 +55,9 @@ void ItemsBox::CreateGui(TString header_text)
   MapWindow();
 }
 
-void ItemsBox::AddFile(TString _filename)
+void ItemsBox::AddFile(TString filename)
 {
-  filenames.push_back(_filename);
+  filenames.push_back(filename);
 
   file = new TFile(filenames[0], "open");
 
@@ -108,11 +108,11 @@ void ItemsBox::BrowseItems(TString fname)
     else if( obj->InheritsFrom("TH1")  ) {
       Item *tmp;
       if(obj->InheritsFrom("TH3"))
-        tmp = new Item( n, entry, name, title, H3);
+        tmp = new Item( n, entry, name, title, Hist3D);
       else if(obj->InheritsFrom("TH2"))
-        tmp = new Item( n, entry, name, title, H2);
+        tmp = new Item( n, entry, name, title, Hist2D);
       else
-        tmp = new Item( n, entry, name, title, H1);
+        tmp = new Item( n, entry, name, title, Hist1D);
       items.push_back(tmp);
     }
     else if ( obj->InheritsFrom("TGraph")  ) {

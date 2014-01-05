@@ -18,14 +18,54 @@
 #include <TGraph.h>
 #include <TGMsgBox.h>
 
+#include "item.h"
+#include "itemsbox.h"
 
 const char* settings_file = ".plotterrc";
 
-const char* default_colours[] = {"kBlack", "kRed", "kBlue", "kGreen", "kYellow",
-                                 "kMagenta", "kCyan", "kOrange+7", "kRed-4",
-                                 "kBlue-4", "kGreen-4", "kYellow-4",
-                                 "kMagenta-4", "kCyan-4", "kOrange", "kRed-9",
-                                 "kBlue-9", "kGreen-9", "kYellow-9", "kMagenta-9"};
+const char* default_colours[] = {"kBlack",
+                                 "kRed",
+                                 "kBlue",
+                                 "kGreen",
+                                 "kYellow",
+                                 "kMagenta",
+                                 "kCyan",
+                                 "kOrange+7",
+                                 "kRed-4",
+                                 "kBlue-4",
+                                 "kGreen-4",
+                                 "kYellow-4",
+                                 "kMagenta-4",
+                                 "kCyan-4",
+                                 "kOrange",
+                                 "kRed-9",
+                                 "kBlue-9",
+                                 "kGreen-9",
+                                 "kYellow-9",
+                                 "kMagenta-9"};
+
+enum MenuId {
+  M_FILE_OPEN,
+  M_FILE_SETTINGS,
+  M_FILE_SAVE_CANVASES,
+  M_FILE_RESET,
+  M_FILE_CLOSE,
+  M_FILE_EXIT,
+  M_CREATE_ADD,
+  M_CREATE_SUBSTRACT,
+  M_CREATE_EFFICIENCY,
+  M_CREATE_RATIO,
+  M_CREATE_SCALE,
+  M_MACRO_BEGIN,
+  M_MACRO_RESET,
+  M_MACRO_CREATE_ROOT,
+  M_MACRO_CREATE_PYTHON,
+  M_VIEW_CUTS,
+  M_VIEW_COLOURS,
+  RB_COLZ,
+  RB_SCATTER,
+  RB_BOX
+};
 
 bool SortVs(Item *i, Item *j)
 {
@@ -37,38 +77,36 @@ bool SortVs(Item *i, Item *j)
 
 ClassImp(Plotter);
 
-Plotter::Plotter(vector<TString> mfiles, bool merge) :
+Plotter::Plotter(vector<TString> filenames, bool merge) :
   TGMainFrame(gClient->GetRoot(), 800, 500),
-  file_names(mfiles),
-  _mergeMode(merge),
-  _macroRecording(false)
+  m_file_names(filenames),
+  m_merge_mode(merge),
+  m_macro_recording(false)
 {
-
   SetCleanup(kLocalCleanup);
 
   plot_list = 0;
 
-
   // Open files
-  number_of_files = file_names.size();
-  if(number_of_files==0){
-    ERROR("Plotter", "There is no file to open");
+  m_number_of_files = m_file_names.size();
+  if(m_number_of_files==0){
+    error("There is no file to open");
     ExitError();
   }
 
-  if(_mergeMode){
+  if(m_merge_mode){
     CreateMergedFileBox();
   }
   else{
     //check input files
     TFile *fin;
-    for(UInt_t i=0; i<number_of_files; i++){
-      MSG("Loading file: " << file_names[i]);
+    for(UInt_t i=0; i<m_number_of_files; i++){
+      msg("Loading file: " << m_file_names[i]);
 
-      if(file_names[i]!="") fin = new TFile(file_names[i].Data(), "open");
+      if(m_file_names[i]!="") fin = new TFile(m_file_names[i].Data(), "open");
 
       if(fin->IsZombie()) {
-        ERROR("OpenFile", "El archivo existe? Es un archivo de root?");
+        error("El archivo existe? Es un archivo de root?");
         ExitError();
       }
     }
@@ -80,7 +118,7 @@ Plotter::Plotter(vector<TString> mfiles, bool merge) :
 
   // Create Gui
   CreateMainWindow();
-  SetWindowName("Plotter");
+  SetWindowName("plotter");
   SetMWMHints(kMWMDecorAll, kMWMFuncAll, kMWMInputModeless);
   MapSubwindows();
   ShowHideColours();
@@ -112,11 +150,11 @@ void Plotter::CreateMainWindow()
   */
 
   CreateMenuBar();
-  fFrame = new TGCompositeFrame(this, 1, 1, kHorizontalFrame);
+  frame_main = new TGCompositeFrame(this, 1, 1, kHorizontalFrame);
   CreateMainFrame();
   CreateOptionsFrame();
   CreateColoursFrame();
-  AddFrame(fFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
+  AddFrame(frame_main, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
   CreateCutsEntry();
   //  CreateStatusBar(); //Not useful now
 }
@@ -130,45 +168,45 @@ void Plotter::CreateMenuBar()
      - Macro: Begin, Reset, Save ROOT macro, Save python macro
    */
 
-  layoutMenuBar     = new TGLayoutHints(kLHintsTop | kLHintsExpandX);
-  layoutMenuBarItem = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 4, 0, 0);
+  layout_menu_bar     = new TGLayoutHints(kLHintsTop | kLHintsExpandX);
+  layout_menu_bar_item = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 4, 0, 0);
 
-  menuFile = new TGPopupMenu(fClient->GetRoot());
-  menuFile->AddEntry("Save all canvases ", M_FILE_SAVE_CANVASES);
-  menuFile->AddEntry("Settings... ", M_FILE_SETTINGS);
-  menuFile->DisableEntry(M_FILE_SETTINGS);
-  menuFile->AddSeparator();
-  menuFile->AddEntry("Exit", M_FILE_EXIT);
-  menuFile->Associate(this);
+  menu_file = new TGPopupMenu(fClient->GetRoot());
+  menu_file->AddEntry("Save all canvases ", M_FILE_SAVE_CANVASES);
+  menu_file->AddEntry("Settings... ", M_FILE_SETTINGS);
+  menu_file->DisableEntry(M_FILE_SETTINGS);
+  menu_file->AddSeparator();
+  menu_file->AddEntry("Exit", M_FILE_EXIT);
+  menu_file->Associate(this);
 
-  menuView = new TGPopupMenu(fClient->GetRoot());
-  menuView->AddEntry("Colours", M_VIEW_COLOURS);
-  menuView->AddEntry("Cuts", M_VIEW_CUTS);
-  menuView->Associate(this);
+  menu_view = new TGPopupMenu(fClient->GetRoot());
+  menu_view->AddEntry("Colours", M_VIEW_COLOURS);
+  menu_view->AddEntry("Cuts", M_VIEW_CUTS);
+  menu_view->Associate(this);
 
-  menuCreate = new TGPopupMenu(fClient->GetRoot());
-  menuCreate->AddEntry("Add", M_CREATE_ADD);
-  menuCreate->AddEntry("Substract", M_CREATE_SUBSTRACT);
-  menuCreate->AddEntry("Efficiency", M_CREATE_EFFICIENCY);
-  menuCreate->Associate(this);
+  // menu_create = new TGPopupMenu(fClient->GetRoot());
+  // menu_create->AddEntry("Add", M_CREATE_ADD);
+  // menu_create->AddEntry("Substract", M_CREATE_SUBSTRACT);
+  // menu_create->AddEntry("Efficiency", M_CREATE_EFFICIENCY);
+  // menu_create->Associate(this);
 
-  menuMacro = new TGPopupMenu(fClient->GetRoot());
-  menuMacro->AddEntry("Begin", M_MACRO_BEGIN);
-  menuMacro->AddEntry("Reset", M_MACRO_RESET);
-  menuMacro->DisableEntry(M_MACRO_RESET);
-  menuMacro->AddEntry("Save Root macro...",   M_MACRO_CREATE_ROOT);
-  menuMacro->DisableEntry(M_MACRO_CREATE_ROOT);
-  menuMacro->AddEntry("Save python macro...", M_MACRO_CREATE_PYTHON);
-  menuMacro->DisableEntry(M_MACRO_CREATE_PYTHON);
-  menuMacro->Associate(this);
+  menu_macro = new TGPopupMenu(fClient->GetRoot());
+  menu_macro->AddEntry("Begin", M_MACRO_BEGIN);
+  menu_macro->AddEntry("Reset", M_MACRO_RESET);
+  menu_macro->DisableEntry(M_MACRO_RESET);
+  menu_macro->AddEntry("Save Root macro...",   M_MACRO_CREATE_ROOT);
+  menu_macro->DisableEntry(M_MACRO_CREATE_ROOT);
+  menu_macro->AddEntry("Save python macro...", M_MACRO_CREATE_PYTHON);
+  menu_macro->DisableEntry(M_MACRO_CREATE_PYTHON);
+  menu_macro->Associate(this);
 
-  menuBar = new TGMenuBar(this, 1, 1, kHorizontalFrame);
-  menuBar->AddPopup("&File",   menuFile, layoutMenuBarItem);
-  menuBar->AddPopup("&View",   menuView, layoutMenuBarItem);
-  menuBar->AddPopup("&Histos", menuCreate, layoutMenuBarItem);
-  menuBar->AddPopup("&Macro",  menuMacro, layoutMenuBarItem);
+  menu_bar = new TGMenuBar(this, 1, 1, kHorizontalFrame);
+  menu_bar->AddPopup("&File",   menu_file, layout_menu_bar_item);
+  menu_bar->AddPopup("&View",   menu_view, layout_menu_bar_item);
+  //menu_bar->AddPopup("&Histos", menu_create, layout_menu_bar_item);
+  menu_bar->AddPopup("&Macro",  menu_macro, layout_menu_bar_item);
 
-  AddFrame(menuBar, layoutMenuBar);
+  AddFrame(menu_bar, layout_menu_bar);
 }
 
 void Plotter::CreateMainFrame()
@@ -177,222 +215,216 @@ void Plotter::CreateMainFrame()
      Each filebox represents a file
    */
 
+  UInt_t n_cols = 0;
+  UInt_t n_rows = 0;
 
-  UInt_t nCols = 0;
-  UInt_t nRows = 0;
-
-  if(number_of_files <= 5){
-    nRows = 1;
-    nCols = number_of_files;
+  if(m_number_of_files <= 5){
+    n_rows = 1;
+    n_cols = m_number_of_files;
   }
-  else if(number_of_files > 5 && number_of_files <= 10){
-    nRows = 2;
-    nCols = int( floor(number_of_files/2. + 0.5) );
+  else if(m_number_of_files > 5 && m_number_of_files <= 10){
+    n_rows = 2;
+    n_cols = int( floor(m_number_of_files/2. + 0.5) );
   }
   else{
-    nRows = 3;
-    nCols = int( floor(number_of_files/3. + 0.5) );
+    n_rows = 3;
+    n_cols = int( floor(m_number_of_files/3. + 0.5) );
   }
 
-  if(_mergeMode) {
-    number_of_files = 1;
-    nRows = 1;
-    nCols = 1;
+  if(m_merge_mode) {
+    m_number_of_files = 1;
+    n_rows = 1;
+    n_cols = 1;
   }
 
   // Width and height of the filebox. Depends screen resolution
-  Int_t  x, y; UInt_t width, height;
+  Int_t  x, y;
+  UInt_t width, height;
   gVirtualX->GetWindowSize(gClient->GetRoot()->GetId(),x,y,width,height);
 
   height = height * 0.75;
 
   UInt_t h = 600;
   UInt_t w = 200;
-  if(nRows == 1)       h = (height-200);
-  else if(nRows == 2)  h = int(height/2);
+  if(n_rows == 1)       h = (height-200);
+  else if(n_rows == 2)  h = int(height/2);
   else                 h = int(height/3);
 
-  fVFrame = new TGCompositeFrame(fFrame, 0, 0, kVerticalFrame);
+  frame_aux = new TGCompositeFrame(frame_main, 0, 0, kVerticalFrame);
 
-  for(UInt_t i=0; i<nRows; i++){
-    fRowFrame[i] = new TGHorizontalFrame(fVFrame, 10, 10, kHorizontalFrame);
+  for(UInt_t i=0; i<n_rows; i++){
+    frame_row[i] = new TGHorizontalFrame(frame_aux, 10, 10, kHorizontalFrame);
   }
 
   // Create file boxes (one for each file)
-  for(UInt_t i=0; i<number_of_files; i++){
+  for(UInt_t i=0; i<m_number_of_files; i++){
     Int_t row;
-    if( i<nCols )                    row = 0;
-    else if( i>=nCols && i<2*nCols ) row = 1;
-    else                             row = 2;
+    if(i < n_cols) row = 0;
+    else if(i>=n_cols && i<2*n_cols) row = 1;
+    else row = 2;
 
-    fb[i] = new ItemsBox(fRowFrame[row], w, h, i);
-    fb[i]->AddFile(file_names[i]);
+    boxes[i] = new ItemsBox(frame_row[row], w, h, i);
+    boxes[i]->AddFile(m_file_names[i]);
 
-    fb[i]->GetContent()->Connect("Selected(Int_t)", "Plotter", this, "OnItemClick(Int_t)");
-    fb[i]->GetContent()->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "Plotter", this, "OnItemDoubleClick(TGFrame*, Int_t)");
+    boxes[i]->GetContent()->Connect("Selected(Int_t)", "Plotter", this, "OnItemClick(Int_t)");
+    boxes[i]->GetContent()->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "Plotter", this, "OnItemDoubleClick(TGFrame*, Int_t)");
 
-    fRowFrame[row]->AddFrame(fb[i], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
+    frame_row[row]->AddFrame(boxes[i], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
   }
 
 
-  for(UInt_t i=0;i<nRows;i++){
-    fVFrame->AddFrame(fRowFrame[i], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
+  for(UInt_t i=0;i<n_rows;i++){
+    frame_aux->AddFrame(frame_row[i], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 0, 2, 0, 2));
   }
 
-  fFrame->AddFrame(fVFrame, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX, 2, 2, 2, 2));
+  frame_main->AddFrame(frame_aux, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX, 2, 2, 2, 2));
 }
 
+/** @fn create_options_frame
+    @brief creates the frame with all the plot options and the buttons
+*/
 void Plotter::CreateOptionsFrame()
 {
-  /* Create options frame
-     - Buttons: Draw, Draw efficiency, Draw ratio, Exit
-     - Histos 1D:
-     - Histos 2D:
-   */
+  layout_buttons = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2);
+  layout_checks  = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 5, 2);
 
-  layoutButtons = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2);
-  layoutChecks  = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 5, 2);
-
-  fOptionsFrame = new TGVerticalFrame(fFrame, 0, 0, kVerticalFrame);
+  frame_options = new TGVerticalFrame(frame_main, 0, 0, kVerticalFrame);
 
   //-- Buttons
-  buttonClearSelection  = new TGTextButton(fOptionsFrame, "Clear selection", 0);
-  buttonDraw            = new TGTextButton(fOptionsFrame, "Draw!",           0);
-  buttonDrawEfficiency  = new TGTextButton(fOptionsFrame, "Draw Efficiency", 0);
-  buttonDrawRatio       = new TGTextButton(fOptionsFrame, "Draw Ratio",      0);
-  buttonExit            = new TGTextButton(fOptionsFrame, "Exit",            0);
+  button_clear_selection = new TGTextButton(frame_options, "Clear selection", 0);
+  button_draw            = new TGTextButton(frame_options, "Draw!",           0);
+  button_draw_efficiency = new TGTextButton(frame_options, "Draw Efficiency", 0);
+  button_draw_ratio      = new TGTextButton(frame_options, "Draw Ratio",      0);
+  button_exit            = new TGTextButton(frame_options, "Exit",            0);
 
-  buttonClearSelection->SetToolTipText("Clear all selected entries.");
-  buttonDraw->SetToolTipText("Plot the selected histos.");
-  buttonDrawEfficiency->SetToolTipText("Plot the efficiency between the two selected histos (hlast/hfirst).");
-  buttonDrawRatio->SetToolTipText("Plot the ratio between the selected histos wrt the first one selected (hn/hfirst).");
+  button_clear_selection->SetToolTipText("Clear all selected entries.");
+  button_draw->SetToolTipText("Plot the selected histos.");
+  //  button_draw_efficiency->SetToolTipText("Plot the efficiency between the two selected histos (hlast/hfirst).");
+  //button_draw_ratio->SetToolTipText("Plot the ratio between the selected histos wrt the first one selected (hn/hfirst).");
 
-  buttonClearSelection->SetStyle("modern");
-  buttonDraw->SetStyle("modern");
-  buttonDrawEfficiency->SetStyle("modern");
-  buttonDrawRatio->SetStyle("modern");
-  buttonExit->SetStyle("modern");
+  button_clear_selection->SetStyle("modern");
+  button_draw->SetStyle("modern");
+  button_draw_efficiency->SetStyle("modern");
+  button_draw_ratio->SetStyle("modern");
+  button_exit->SetStyle("modern");
 
-  buttonClearSelection->Associate(this);
-  buttonDraw->Associate(this);
-  buttonDrawEfficiency->Associate(this);
-  buttonDrawRatio->Associate(this);
-  buttonExit->Associate(this);
+  button_clear_selection->Associate(this);
+  button_draw->Associate(this);
+  button_draw_efficiency->Associate(this);
+  button_draw_ratio->Associate(this);
+  button_exit->Associate(this);
 
-  buttonClearSelection->Connect("Clicked()", "Plotter", this, "OnButtonClearSelection()");
-  buttonDraw->Connect("Clicked()", "Plotter", this, "OnButtonDraw()");
-  buttonDrawEfficiency->Connect("Clicked()", "Plotter", this, "OnButtonDrawEfficiency()");
-  buttonDrawRatio->Connect("Clicked()", "Plotter", this, "OnButtonDrawRatio()");
-  buttonExit->Connect("Clicked()", "Plotter", this, "OnButtonExit()");
+  button_clear_selection->Connect("Clicked()", "Plotter", this, "OnButtonClearSelection()");
+  button_draw->Connect("Clicked()", "Plotter", this, "OnButtonDraw()");
+  //button_draw_efficiency->Connect("Clicked()", "Plotter", this, "draw(\"Plot::Efficiency\")");
+  //button_draw_ratio->Connect("Clicked()", "Plotter", this, "draw(\"Plot::Ratio\")");
+  button_exit->Connect("Clicked()", "Plotter", this, "OnButtonExit()");
 
 
   //-- General Options
-  gGeneralOptions = new TGGroupFrame(fOptionsFrame, "Draw Options", kVerticalFrame);
+  group_options = new TGGroupFrame(frame_options, "Draw Options", kVerticalFrame);
 
-  gGeneralOptions->AddFrame(checkIncludeRatio = new TGCheckButton(gGeneralOptions, "Include Ratio", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
-  gGeneralOptions->AddFrame(checkIncludeDiff  = new TGCheckButton(gGeneralOptions, "Include Difference", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  gGeneralOptions->AddFrame(checkOrder        = new TGCheckButton(gGeneralOptions, "Keep file order", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  checkOrder->SetToolTipText("Draw the selected histos in the files/entries order instead the selection order.");
+  group_options->AddFrame(check_include_ratio = new TGCheckButton(group_options, "Include Ratio", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
+  group_options->AddFrame(check_include_diff  = new TGCheckButton(group_options, "Include Difference", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  group_options->AddFrame(check_order        = new TGCheckButton(group_options, "Keep file order", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  check_order->SetToolTipText("Draw the selected histos in the files/entries order instead the selection order.");
 
-  fLog = new TGCompositeFrame(gGeneralOptions, 10, 10, kHorizontalFrame);
-  fLog->AddFrame(checkLogX = new TGCheckButton(fLog, "SetLogX", 0), new TGLayoutHints( kLHintsLeft, 2, 2, 5, 2));
-  fLog->AddFrame(checkLogY = new TGCheckButton(fLog, "SetLogY", 0), new TGLayoutHints( kLHintsLeft, 10, 2, 5, 2));
-  gGeneralOptions->AddFrame(fLog, new TGLayoutHints( kLHintsLeft, 0, 0, 0, 0));
-
+  frame_log = new TGCompositeFrame(group_options, 10, 10, kHorizontalFrame);
+  frame_log->AddFrame(check_log_x = new TGCheckButton(frame_log, "SetLogX", 0), new TGLayoutHints( kLHintsLeft, 2, 2, 5, 2));
+  frame_log->AddFrame(check_log_y = new TGCheckButton(frame_log, "SetLogY", 0), new TGLayoutHints( kLHintsLeft, 10, 2, 5, 2));
+  group_options->AddFrame(frame_log, new TGLayoutHints( kLHintsLeft, 0, 0, 0, 0));
 
   //-- Histos options
-  gHistosOptions = new TGGroupFrame(fOptionsFrame, "Histos", kVerticalFrame);
-  gHistosOptions->SetTitlePos(TGGroupFrame::kLeft);
+  group_hist_options = new TGGroupFrame(frame_options, "Histos", kVerticalFrame);
+  group_hist_options->SetTitlePos(TGGroupFrame::kLeft);
 
-  fRebin = new TGCompositeFrame(gHistosOptions, 0, 0, kHorizontalFrame);
-  labelRebin = new TGLabel(fRebin, "Rebin");
-  nentryRebin = new TGNumberEntry(fRebin, 1, 1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative);
-  nentryRebin->Resize(75,20);
-  nentryRebin->Associate(this);
-  fRebin->AddFrame(labelRebin, new TGLayoutHints( kLHintsLeft, 2, 2, 5, 2));
-  fRebin->AddFrame(nentryRebin, new TGLayoutHints( kLHintsRight, 2, 2, 5, 2));
-  gHistosOptions->AddFrame(fRebin,    new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
+  frame_rebin = new TGCompositeFrame(group_hist_options, 0, 0, kHorizontalFrame);
+  label_rebin = new TGLabel(frame_rebin, "Rebin");
+  nentry_rebin = new TGNumberEntry(frame_rebin, 1, 1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative);
+  nentry_rebin->Resize(75,20);
+  nentry_rebin->Associate(this);
+  frame_rebin->AddFrame(label_rebin, new TGLayoutHints( kLHintsLeft, 2, 2, 5, 2));
+  frame_rebin->AddFrame(nentry_rebin, new TGLayoutHints( kLHintsRight, 2, 2, 5, 2));
+  group_hist_options->AddFrame(frame_rebin,    new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
 
-  gHistosOptions->AddFrame(checkNormalise  = new TGCheckButton(gHistosOptions, "Normalise (1)", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
-  gHistosOptions->AddFrame(checkNormalise2  = new TGCheckButton(gHistosOptions, "Normalise (first)", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
-  checkNormalise->SetToolTipText("Normalise the histograms to 1.");
-  checkNormalise2->SetToolTipText("Normalise the histograms to the first selected histogram.");
+  group_hist_options->AddFrame(check_normalise  = new TGCheckButton(group_hist_options, "Normalise (1)", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
+  group_hist_options->AddFrame(check_normalise2  = new TGCheckButton(group_hist_options, "Normalise (first)", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
+  check_normalise->SetToolTipText("Normalise the histograms to 1.");
+  check_normalise2->SetToolTipText("Normalise the histograms to the first selected histogram.");
 
-  gHistosOptions->AddFrame(checkStats      = new TGCheckButton(gHistosOptions, "Show Stats", 0), layoutChecks);
-  checkStats->SetToolTipText("Show the histogram stats.");
-  gHistosOptions->AddFrame(checkHist       = new TGCheckButton(gHistosOptions, "Line", 0),       layoutChecks);
-  checkHist->SetToolTipText("Use the \"hist\" option.");
-  gHistosOptions->AddFrame(checkP       = new TGCheckButton(gHistosOptions, "Point", 0),       layoutChecks);
-  checkP->SetToolTipText("Use the \"P\" option.");
-  gHistosOptions->AddFrame(checkText       = new TGCheckButton(gHistosOptions, "Text", 0),       layoutChecks);
-  checkHist->SetToolTipText("Use the \"text\" option.");
-  gHistosOptions->AddFrame(checkPie       = new TGCheckButton(gHistosOptions, "Pie", 0),       layoutChecks);
-  checkPie->SetToolTipText("Use the \"pie\" option.");
-  //  gHistosOptions->AddFrame(checkStack       = new TGCheckButton(gHistosOptions, "Stack", 0),       layoutChecks);
+  group_hist_options->AddFrame(check_stats = new TGCheckButton(group_hist_options, "Show Stats", 0), layout_checks);
+  check_stats->SetToolTipText("Show the histogram stats.");
+  group_hist_options->AddFrame(check_hist = new TGCheckButton(group_hist_options, "Line", 0), layout_checks);
+  check_hist->SetToolTipText("Use the \"hist\" option.");
+  group_hist_options->AddFrame(check_p = new TGCheckButton(group_hist_options, "Point", 0), layout_checks);
+  check_p->SetToolTipText("Use the \"P\" option.");
+  group_hist_options->AddFrame(check_text = new TGCheckButton(group_hist_options, "Text", 0), layout_checks);
+  check_hist->SetToolTipText("Use the \"text\" option.");
+  group_hist_options->AddFrame(check_pie = new TGCheckButton(group_hist_options, "Pie", 0), layout_checks);
+  check_pie->SetToolTipText("Use the \"pie\" option.");
+  //  group_histosoptions->AddFrame(checkStack       = new TGCheckButton(group_histosoptions, "Stack", 0),       layoutChecks);
   //  checkStack->SetToolTipText("Stack the histos.");
 
   //-- Histos2D options
-  gHistos2DOptions = new TGGroupFrame(fOptionsFrame, "Histos 2D", kVerticalFrame);
-  gHistos2DOptions->SetTitlePos(TGGroupFrame::kLeft);
+  group_hist2D_options = new TGGroupFrame(frame_options, "Histos 2D", kVerticalFrame);
+  group_hist2D_options->SetTitlePos(TGGroupFrame::kLeft);
 
-  gHistos2DOptions->SetLayoutManager(new TGHorizontalLayout(gHistos2DOptions));
-  gHistos2DOptions->AddFrame(radioColz    = new TGRadioButton(gHistos2DOptions, "COLZ"   , RB_COLZ),    new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
-  gHistos2DOptions->AddFrame(radioScatter = new TGRadioButton(gHistos2DOptions, "SCATTER", RB_SCATTER), new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
-  gHistos2DOptions->AddFrame(radioBox     = new TGRadioButton(gHistos2DOptions, "BOX"    , RB_BOX),     new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
-  radioColz->SetState(kButtonDown);
-  radioColz->Associate(this);
-  radioScatter->Associate(this);
-  radioBox->Associate(this);
+  group_hist2D_options->SetLayoutManager(new TGHorizontalLayout(group_hist2D_options));
+  group_hist2D_options->AddFrame(radio_colz = new TGRadioButton(group_hist2D_options, "COLZ", RB_COLZ), new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
+  group_hist2D_options->AddFrame(radio_scatter = new TGRadioButton(group_hist2D_options, "SCATTER", RB_SCATTER), new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
+  group_hist2D_options->AddFrame(radio_box = new TGRadioButton(group_hist2D_options, "BOX", RB_BOX), new TGLayoutHints( kLHintsLeft, 1, 1, 1, 1));
+  radio_colz->SetState(kButtonDown);
+  radio_colz->Associate(this);
+  radio_scatter->Associate(this);
+  radio_box->Associate(this);
 
-  fOptionsFrame->AddFrame(buttonClearSelection,  new TGLayoutHints(kLHintsExpandX, 2, 2, 29, 2));
-  fOptionsFrame->AddFrame(buttonDraw,            layoutButtons);
-  fOptionsFrame->AddFrame(buttonDrawEfficiency,  layoutButtons);
-  fOptionsFrame->AddFrame(buttonDrawRatio,       layoutButtons);
-  fOptionsFrame->AddFrame(buttonExit,            new TGLayoutHints(kLHintsExpandX, 2, 2, 5, 20));
-  fOptionsFrame->AddFrame(gGeneralOptions,       new TGLayoutHints(kLHintsExpandX, 2, 5, 5, 20));
-  fOptionsFrame->AddFrame(gHistosOptions,        new TGLayoutHints(kLHintsExpandX, 2, 5, 5, 20));
-  fOptionsFrame->AddFrame(gHistos2DOptions,      new TGLayoutHints(kLHintsExpandX, 2, 5, 2, 20));
+  frame_options->AddFrame(button_clear_selection, new TGLayoutHints(kLHintsExpandX, 2, 2, 29, 2));
+  frame_options->AddFrame(button_draw, layout_buttons);
+  frame_options->AddFrame(button_draw_efficiency, layout_buttons);
+  frame_options->AddFrame(button_draw_ratio,layout_buttons);
+  frame_options->AddFrame(button_exit, new TGLayoutHints(kLHintsExpandX, 2, 2, 5, 20));
+  frame_options->AddFrame(group_options, new TGLayoutHints(kLHintsExpandX, 2, 5, 5, 20));
+  frame_options->AddFrame(group_hist_options, new TGLayoutHints(kLHintsExpandX, 2, 5, 5, 20));
+  frame_options->AddFrame(group_hist2D_options, new TGLayoutHints(kLHintsExpandX, 2, 5, 2, 20));
 
-  fFrame->AddFrame(fOptionsFrame, new TGLayoutHints(kLHintsNormal, 0, 2, 0, 2)); //Add Options frame to fFrame
+  frame_main->AddFrame(frame_options, new TGLayoutHints(kLHintsNormal, 0, 2, 0, 2)); //Add Options frame to fFrame
 }
 
+/** creates the frame to choose the plot colours
+*/
 void Plotter::CreateColoursFrame()
 {
-  /* Colours frame */
+    frame_colours = new TGVerticalFrame(frame_main, 0, 0, kVerticalFrame);
 
-  fColoursFrame = new TGVerticalFrame(fFrame, 0, 0, kVerticalFrame);
-
-  gColours = new TGGroupFrame(fColoursFrame, "Colours", kVerticalFrame);
-  gColours->SetLayoutManager(new TGMatrixLayout(gColours, 0, 2, 6, 6));
+  group_colours = new TGGroupFrame(frame_colours, "Colours", kVerticalFrame);
+  group_colours->SetLayoutManager(new TGMatrixLayout(group_colours, 0, 2, 6, 6));
 
   for(UInt_t i=0; i<20; i++){
-    colorselect[i] = new TGColorSelect(gColours, pcolors[i], 50+i);
-    gColours->AddFrame(colorselect[i],  new TGLayoutHints(kLHintsNormal | kLHintsExpandY, 10, 2, 2, 2));
+    colorselect[i] = new TGColorSelect(group_colours, pcolors[i], 50+i);
+    group_colours->AddFrame(colorselect[i], new TGLayoutHints(kLHintsNormal | kLHintsExpandY, 10, 2, 2, 2));
     colorselect[i]->Resize(35, 15);
     colorselect[i]->Associate(this);
-    gColours->AddFrame(checkFill[i] = new TGCheckButton(gColours, "", 0), new TGLayoutHints(kLHintsRight, 30, 2, 2, 2));
-    checkFill[i]->SetToolTipText("Fill");
+    group_colours->AddFrame(check_fill[i] = new TGCheckButton(group_colours, "", 0), new TGLayoutHints(kLHintsRight, 30, 2, 2, 2));
+    check_fill[i]->SetToolTipText("Fill");
   }
-  fColoursFrame->AddFrame(gColours,      new TGLayoutHints(kLHintsExpandY, 5, 5, 5, 5));
+  frame_colours->AddFrame(group_colours, new TGLayoutHints(kLHintsExpandY, 5, 5, 5, 5));
 
-  fFrame->AddFrame(fColoursFrame,      new TGLayoutHints(kLHintsExpandY, 2, 2, 2, 2));
+  frame_main->AddFrame(frame_colours, new TGLayoutHints(kLHintsExpandY, 2, 2, 2, 2));
 }
 
 void Plotter::CreateCutsEntry()
 {
-  // Cuts Entry
-
-  entryCuts = new TGTextEntry(this, "Cuts");
-  entryCuts->SetDefaultSize(150,entryCuts->GetDefaultHeight());
-  entryCuts->SetAlignment(kTextCenterX);
-  AddFrame(entryCuts,   new TGLayoutHints(kLHintsExpandX, 5, 2, 2, 2));
-  menuView->CheckEntry(M_VIEW_CUTS);
+  entry_cuts = new TGTextEntry(this, "Cuts");
+  entry_cuts->SetDefaultSize(150, entry_cuts->GetDefaultHeight());
+  entry_cuts->SetAlignment(kTextCenterX);
+  AddFrame(entry_cuts,   new TGLayoutHints(kLHintsExpandX, 5, 2, 2, 2));
+  menu_view->CheckEntry(M_VIEW_CUTS);
 }
 
 void Plotter::CreateStatusBar() // Sin uso por ahora :P
 {
-  fStatusBar = new TGStatusBar(this, 50, 10, kHorizontalFrame);
-  AddFrame(fStatusBar, new TGLayoutHints(kLHintsBottom | kLHintsLeft | kLHintsExpandX,0,0,2,0));
+  status_bar = new TGStatusBar(this, 50, 10, kHorizontalFrame);
+  AddFrame(status_bar, new TGLayoutHints(kLHintsBottom | kLHintsLeft | kLHintsExpandX,0,0,2,0));
 }
 
 Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
@@ -472,16 +504,16 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
     case kCM_RADIOBUTTON:
       switch (parm1) {
       case RB_COLZ:
-        radioBox->SetState(kButtonUp);
-        radioScatter->SetState(kButtonUp);
+        radio_box->SetState(kButtonUp);
+        radio_scatter->SetState(kButtonUp);
         break;
       case RB_SCATTER:
-        radioBox->SetState(kButtonUp);
-        radioColz->SetState(kButtonUp);
+        radio_box->SetState(kButtonUp);
+        radio_colz->SetState(kButtonUp);
         break;
       case RB_BOX:
-        radioScatter->SetState(kButtonUp);
-        radioColz->SetState(kButtonUp);
+        radio_scatter->SetState(kButtonUp);
+        radio_colz->SetState(kButtonUp);
         break;
       }
       break;
@@ -499,11 +531,11 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
 void Plotter::CreateMergedFileBox()
 {
 
-  Int_t n_files = file_names.size();
+  Int_t n_files = m_file_names.size();
   TFile* fin[n_files];
   TString tree_name;
 
-  fin[0] = new TFile(file_names[0], "open") ;
+  fin[0] = new TFile(m_file_names[0], "open") ;
 
   TList*   list = fin[0]->GetListOfKeys();
   TKey*    key = (TKey*)list->At(0);
@@ -512,15 +544,15 @@ void Plotter::CreateMergedFileBox()
   if( obj->InheritsFrom("TTree") )
     tree_name = obj->GetName();
   else{
-    ERROR("AddFile","There is no tree in the input file.");
+    error("There is no tree in the input file.");
     ExitError();
   }
 
   merge_chain = new TChain(tree_name, tree_name);
 
   for(Int_t k=0; k<n_files; k++){
-    MSG("Adding file: " << file_names[k]);
-    merge_chain->Add( file_names[k] );
+    msg("Adding file: " << m_file_names[k]);
+    merge_chain->Add( m_file_names[k] );
   }
 
 //   CreateGui(tree_name);
@@ -584,15 +616,11 @@ void Plotter::SetStyle()
 }
 
 
-
-/* Funciones utiles
-------------------*/
-
 void Plotter::GetColours()
 {
   for(int k=0; k<plot_list->GetSize(); k++){
     colours[k] = TColor::GetColor(pcolors[k]);
-    if(fFrame->IsVisible(fColoursFrame))
+    if(frame_main->IsVisible(frame_colours))
       colours[k] = TColor::GetColor(colorselect[k]->GetColor());
   }
 }
@@ -608,8 +636,8 @@ void Plotter::ClearSelection()
   items_sel.clear();
   if(plot_list) plot_list->Clear();
 
-  for(UInt_t i=0; i<number_of_files; i++){
-    fb[i]->Clear();
+  for(UInt_t i=0; i<m_number_of_files; i++){
+    boxes[i]->Clear();
   }
 
   return;
@@ -617,13 +645,13 @@ void Plotter::ClearSelection()
 
 void Plotter::Exit()
 {
-  MSG("Chau :)");
+  msg("Chau :)");
   CloseWindow();
 }
 
 void Plotter::ExitError()
 {
-  MSG("Chau :(");
+  msg("Chau :(");
   CloseWindow();
 }
 
@@ -647,15 +675,15 @@ TObject* Plotter::GetObject(Item* it)
 
   if(it->IsBranch()){
     TString cut = "";
-    cut = TString(entryCuts->GetText()).EqualTo("Cuts") ? "" : entryCuts->GetText();
+    cut = TString(entry_cuts->GetText()).EqualTo("Cuts") ? "" : entry_cuts->GetText();
 
-    TTree* tree = fb[nfile]->GetCurrentTree();
+    TTree* tree = boxes[nfile]->GetCurrentTree();
     tree->Draw(name+">>h", cut, "goff");
 
     obj = (TH1*)gDirectory->Get("h");
   }
   else {
-    TDirectory *dir = fb[nfile]->GetCurrentDir();
+    TDirectory *dir = boxes[nfile]->GetCurrentDir();
     obj = dir->Get(name);
 }
 
@@ -675,7 +703,7 @@ void Plotter::Draw(Plot::Type type)
   if((type == Plot::Ratio || type == Plot::Efficiency) && items_sel.size()<2) return;
 
   // Plot order: 1) Selected order (default). 2) Order by file and entry.
-  if(checkOrder->GetState())  sort(items_sel.begin(), items_sel.end(), SortVs);
+  if(check_order->GetState())  sort(items_sel.begin(), items_sel.end(), SortVs);
 
   //Create new canvas
   Int_t nro = canvas.size();
@@ -699,7 +727,7 @@ void Plotter::Draw(Plot::Type type)
       CreatePlotList();
       ConfigurePlotList();
 
-      if(checkIncludeRatio->GetState()){
+      if(check_include_ratio->GetState()){
 
         TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
         TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
@@ -714,8 +742,8 @@ void Plotter::Draw(Plot::Type type)
         down->SetBottomMargin(0.2);
         down->SetTopMargin(0.01);
 
-        if(checkLogX->GetState()) up->SetLogx();
-        if(checkLogY->GetState()) up->SetLogy();
+        if(check_log_x->GetState()) up->SetLogx();
+        if(check_log_y->GetState()) up->SetLogy();
 
         up->Draw();
         down->Draw();
@@ -726,7 +754,7 @@ void Plotter::Draw(Plot::Type type)
         down->cd();
         good_plot = PlotRatios(true);
       }
-      else if(checkIncludeDiff->GetState()){
+      else if(check_include_diff->GetState()){
 
         TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
         TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
@@ -741,8 +769,8 @@ void Plotter::Draw(Plot::Type type)
         down->SetBottomMargin(0.2);
         down->SetTopMargin(0.01);
 
-        if(checkLogX->GetState()) up->SetLogx();
-        if(checkLogY->GetState()) up->SetLogy();
+        if(check_log_x->GetState()) up->SetLogx();
+        if(check_log_y->GetState()) up->SetLogy();
 
         up->Draw();
         down->Draw();
@@ -755,8 +783,8 @@ void Plotter::Draw(Plot::Type type)
       }
       else {
         //if(_macroRecording) macro->AddCanvas(canvas[nro]->GetName());
-        if(checkLogX->GetState()) canvas[nro]->SetLogx();
-        if(checkLogY->GetState()) canvas[nro]->SetLogy();
+        if(check_log_x->GetState()) canvas[nro]->SetLogx();
+        if(check_log_y->GetState()) canvas[nro]->SetLogy();
         PlotHistos();
         good_plot = true;
 
@@ -804,7 +832,7 @@ void Plotter::CreatePlotList()
       h = (TH1*)GetObject(items_sel[k]);
 
       if( h->GetEntries() == 0 ) {
-        ERROR("Draw", items_sel[k]->GetName() << " is empty.");
+        error(items_sel[k]->GetName() << " is empty.");
         continue;
       }
 
@@ -821,13 +849,13 @@ void Plotter::CreatePlotList()
       if(is2D) h2 = (TH2*) h;
       if(is3D) h3 = (TH3*) h;
 
-      if(checkNormalise->GetState() && checkNormalise2->GetState())
-        ERROR("Draw", "I'm confused o.O! Both normalise check buttons are selected. I'll do what I want.");
-      if(checkNormalise->GetState())   h->Scale(1/h->Integral());
-      if(checkNormalise2->GetState() && plot_list->GetSize()!=0)
+      if(check_normalise->GetState() && check_normalise2->GetState())
+        error("I'm confused o.O! Both normalise check buttons are selected. I'll do what I want.");
+      if(check_normalise->GetState())   h->Scale(1/h->Integral());
+      if(check_normalise2->GetState() && plot_list->GetSize()!=0)
         h->Scale( ((TH1*)plot_list->At(0))->Integral()/h->Integral());
 
-      Int_t rebin = nentryRebin->GetIntNumber();
+      Int_t rebin = nentry_rebin->GetIntNumber();
       if(rebin > 1){
         if(is1D)
           h->Rebin(rebin);
@@ -844,20 +872,20 @@ void Plotter::CreatePlotList()
 
       // Draw options
       TString draw_opt = "";
-      if(checkText->GetState()) draw_opt += "text";
+      if(check_text->GetState()) draw_opt += "text";
 
       if(is1D){
-        if(checkHist->GetState()) draw_opt += "hist";
-        if(checkP->GetState()) draw_opt += "P";
-        if(checkPie->GetState()) draw_opt += "PIE";
+        if(check_hist->GetState()) draw_opt += "hist";
+        if(check_p->GetState()) draw_opt += "P";
+        if(check_pie->GetState()) draw_opt += "PIE";
       }
       else if(is2D){
-        if(radioScatter->GetState())  draw_opt += "scat";
-        else if(radioBox->GetState()) draw_opt += "box";
+        if(radio_scatter->GetState())  draw_opt += "scat";
+        else if(radio_box->GetState()) draw_opt += "box";
         else  draw_opt += "colz";
       }
 
-      if(checkText->GetState()) draw_opt += "text";
+      if(check_text->GetState()) draw_opt += "text";
       if(k!=0) draw_opt += "same";
 
       if(is1D) plot_list->Add(h, draw_opt);
@@ -928,7 +956,7 @@ void Plotter::ConfigurePlotList()
 
   y_max *= 1.1;
 
-  if(checkNormalise->GetState() && checkNormalise2->GetState()) y_max /= h->Integral();
+  if(check_normalise->GetState() && check_normalise2->GetState()) y_max /= h->Integral();
 
   if (gPad->GetLogy()){
     if (y_min > 0)  y_min *= .9;
@@ -961,7 +989,7 @@ void Plotter::ConfigurePlotList()
     if(plot_list->GetSize() == 1) h->GetXaxis()->SetTitle(items_sel[0]->GetName());
     else if(same) h->GetXaxis()->SetTitle(items_sel[0]->GetName());
 
-    if(checkStats->GetState()) h->SetStats(1);
+    if(check_stats->GetState()) h->SetStats(1);
     else                       h->SetStats(0);
   }
   else if(firstIsGraph){
@@ -990,7 +1018,7 @@ void Plotter::ConfigurePlotList()
       h = (TH1*) obj;
       h->SetLineColor(colours[k]);
       h->SetMarkerColor(colours[k]);
-      if(checkFill[k]->GetState()) h->SetFillColor(colours[k]);
+      if(check_fill[k]->GetState()) h->SetFillColor(colours[k]);
 
       h->SetMarkerStyle(marker_style);
       h->SetMarkerSize(marker_size);
@@ -1041,7 +1069,7 @@ void Plotter::PlotHistos()
 bool Plotter::PlotEfficiency()
 {
   TGraphAsymmErrors *gr = CreateEfficiency();
-  if(!gr) { ERROR("PlotEfficiency", "No se pudo crear el TGraphAsymmErrors."); return false; }
+  if(!gr) { error("No se pudo crear el TGraphAsymmErrors."); return false; }
 
   gr->GetXaxis()->SetTitle("");
   gr->GetYaxis()->SetTitle("Efficiency");
@@ -1071,7 +1099,7 @@ bool Plotter::PlotRatios(bool down)
   }
 
   if(!ratio[0]) {
-    ERROR("PlotRatios", "There are no ratios to plot.");
+    error("There are no ratios to plot.");
     return false;
   }
 
@@ -1123,7 +1151,7 @@ bool Plotter::PlotRelativeDiffs(bool down)
   }
 
   if(!diff[0]) {
-    ERROR("PlotRelativeDiffs", "There are no differences to plot.");
+    error("There are no differences to plot.");
     return false;
   }
 
@@ -1185,13 +1213,13 @@ void Plotter::PlotLegend(Plot::Type type)
 
       TString tmp = "";
       if(mfile){
-        tmp = fb[items_sel[k]->GetFile()]->GetHeaderText();
+        tmp = boxes[items_sel[k]->GetFile()]->GetHeaderText();
       }
       else if(mtitle){
         items_sel[k]->GetLegendText();
       }
       else if(mtitlefile){
-        tmp = " (" + fb[items_sel[k]->GetFile()]->GetHeaderText() + ")";
+        tmp = " (" + boxes[items_sel[k]->GetFile()]->GetHeaderText() + ")";
         tmp=items_sel[k]->GetLegendText()+tmp;
       }
       legend.push_back(tmp);
@@ -1238,7 +1266,7 @@ void Plotter::PlotLegend(Plot::Type type)
 vector<int> Plotter::GetNumberOfObjectsInEachFile()
 {
   vector<int> hsv;
-  for(unsigned int f=0; f<number_of_files; f++) hsv.push_back(0);
+  for(unsigned int f=0; f<m_number_of_files; f++) hsv.push_back(0);
 
   for(unsigned int k=0; k<items_sel.size(); k++){
     hsv[items_sel[k]->GetFile()]++;
@@ -1298,7 +1326,7 @@ Int_t Plotter::SaveCanvases()
 
   // for(int i=0; i< plot_list->GetSize(); i++){
   //   if(!plot_list->At(i)->InheritsFrom("TH1")) {
-  //     ERROR();
+  //     error();
   //     return 0;
   //   }
   // }
@@ -1314,9 +1342,12 @@ TGraphAsymmErrors* Plotter::CreateEfficiency()
 
   CreatePlotList();
 
-  if(plot_list->GetSize()!=2) { ERROR("CreateEfficiency", "Solo funciona si seleccionas dos histogramas."); return 0; }
+  if(plot_list->GetSize()!=2) { error("Solo funciona si seleccionas dos histogramas."); return 0; }
 
-  if(!plot_list->At(0)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(1)->IsA()->InheritsFrom(TH1::Class())) { ERROR("CreateEfficiency", "Solo funciona si seleccionas dos histogramas."); return 0; }
+  if(!plot_list->At(0)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(1)->IsA()->InheritsFrom(TH1::Class())) {
+    error("Solo funciona si seleccionas dos histogramas.");
+    return 0;
+  }
 
   TH1 *h_numerator, *h_denominator;
 
@@ -1325,7 +1356,7 @@ TGraphAsymmErrors* Plotter::CreateEfficiency()
 
   TGraphAsymmErrors *gr = new TGraphAsymmErrors();
 
-  gr->Divide(h_numerator,h_denominator,"cl=0.683 b(0.5,0.5) mode");
+  gr->Divide(h_numerator, h_denominator, "cl=0.683 b(0.5,0.5) mode");
 
   return gr;
 }
@@ -1335,10 +1366,10 @@ TH1* Plotter::CreateRatio(int index_first, int index_last, bool down)
 
   if(!down) CreatePlotList();
 
-  if(plot_list->GetSize()!=2) { ERROR("CreateRatio", "Solo funciona con dos histogramas."); return 0; }
+  if(plot_list->GetSize()!=2) { error("Solo funciona con dos histogramas."); return 0; }
 
   if(!plot_list->At(index_first)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(index_last)->IsA()->InheritsFrom(TH1::Class())) {
-    ERROR("CreateRatio", "Solo funciona si seleccionas dos histogramas."); return 0;
+    error("Solo funciona si seleccionas dos histogramas."); return 0;
   }
 
   TH1 *h_numerator, *h_denominator;
@@ -1360,10 +1391,10 @@ TH1* Plotter::CreateRelativeDiff(int index_first, int index_last, bool down)
 
   if(!down) CreatePlotList();
 
-  if(plot_list->GetSize()!=2) { ERROR("CreateRelativeDiff", "Solo con dos histogramas."); return 0; }
+  if(plot_list->GetSize()!=2) { error("Solo con dos histogramas."); return 0; }
 
   if(!plot_list->At(index_first)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(index_last)->IsA()->InheritsFrom(TH1::Class())) {
-    ERROR("CreateRelativeDiff", "Solo funciona con dos histogramas."); return 0;
+    error("Solo funciona con dos histogramas."); return 0;
   }
 
   TH1 *h_first, *h_last;
@@ -1405,7 +1436,7 @@ void Plotter::BeginMacro()
 void Plotter::ResetMacro()
 {
   // macro->Reset();
-  // MSG("The macro has been reseted.");
+  // msg("The macro has been reseted.");
 }
 
 void Plotter::CreateMacro(OutputFormat type)
@@ -1420,7 +1451,7 @@ void Plotter::CreateMacro(OutputFormat type)
 
   //   macro->SaveMacro(fi.fFilename, type);
 
-  //   MSG("The macro " << fi.fFilename << " has been created. ");
+  //   msg("The macro " << fi.fFilename << " has been created. ");
   // }
 
   // return;
@@ -1444,9 +1475,9 @@ void Plotter::LoadSettings()
   }
 
   //Style
-  marker_size  = env.GetValue("MarkerSize", 0.8);
-  marker_style = env.GetValue("MarkerStyle", 20);
-  line_width   = env.GetValue("LineWidth", 1);
+  marker_size  = 0.8; //env.GetValue("MarkerSize", 0.8);
+  marker_style = 20; //env.GetValue("MarkerStyle", 20);
+  line_width   = 1; //env.GetValue("LineWidth", 1);
 
   return;
 }
@@ -1532,7 +1563,7 @@ void Plotter::OnItemClick(Int_t id)
   Int_t nentry = id_to_entry(id);
   Int_t nfile  = id_to_file(id);
 
-  Item *it = fb[nfile]->GetItem(nentry);
+  Item *it = boxes[nfile]->GetItem(nentry);
 
   // if folder/tree do nothing and return
   if(!it->IsPlotable()) {
@@ -1571,11 +1602,11 @@ void Plotter::OnItemDoubleClick(TGFrame* f, Int_t btn)
     Int_t nentry = id_to_entry(id);
     Int_t nfile  = id_to_file(id);
 
-    Item *it = fb[nfile]->GetItem(nentry);
+    Item *it = boxes[nfile]->GetItem(nentry);
 
     if(it->IsPlotable()){
       //Draw(Plot::Normal);
-      fb[nfile]->GetContent()->GetEntry(id)->Activate(false);
+      boxes[nfile]->GetContent()->GetEntry(id)->Activate(false);
       OnItemClick(id);
     }
   }
@@ -1628,30 +1659,30 @@ void Plotter::OnButtonSaveColours()
 
 void Plotter::ShowHideColours()
 {
-  if(fFrame->IsVisible(fColoursFrame)){
-    fFrame->HideFrame(fColoursFrame);
-    menuView->UnCheckEntry(M_VIEW_COLOURS);
-    fFrame->Resize(fFrame->GetWidth() - 70, fFrame->GetHeight());
+  if(frame_main->IsVisible(frame_colours)){
+    frame_main->HideFrame(frame_colours);
+    menu_view->UnCheckEntry(M_VIEW_COLOURS);
+    frame_main->Resize(frame_main->GetWidth() - 70, frame_main->GetHeight());
     this->Resize(this->GetWidth() - 70, this->GetHeight());
   }
   else {
-    fFrame->ShowFrame(fColoursFrame);
-    menuView->CheckEntry(M_VIEW_COLOURS);
-    fFrame->Resize(fFrame->GetWidth() + 70, fFrame->GetHeight());
+    frame_main->ShowFrame(frame_colours);
+    menu_view->CheckEntry(M_VIEW_COLOURS);
+    frame_main->Resize(frame_main->GetWidth() + 70, frame_main->GetHeight());
     this->Resize(this->GetWidth() + 70, this->GetHeight());
   }
 }
 
 void Plotter::ShowHideCuts()
 {
-  if(this->IsVisible(entryCuts)){
-    this->HideFrame(entryCuts);
-    menuView->UnCheckEntry(M_VIEW_CUTS);
+  if(this->IsVisible(entry_cuts)){
+    this->HideFrame(entry_cuts);
+    menu_view->UnCheckEntry(M_VIEW_CUTS);
     this->Resize(this->GetWidth(), this->GetHeight() - 30);
   }
   else {
-    this->ShowFrame(entryCuts);
-    menuView->CheckEntry(M_VIEW_CUTS);
+    this->ShowFrame(entry_cuts);
+    menu_view->CheckEntry(M_VIEW_CUTS);
     this->Resize(this->GetWidth(), this->GetHeight() + 30);
   }
 }

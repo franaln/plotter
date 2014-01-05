@@ -1,8 +1,8 @@
 /** @file base.h
     @brief Common definitions and fns */
 
-#ifndef BASE_H
-#define BASE_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <iostream>
 
@@ -19,7 +19,7 @@
 
 // output messages
 #define msg(x)  std::cout << "[plotter] " << x << std::endl;
-#define error(x) std::cout << RED << "  [error] " << ENDC << x << std::endl;
+#define error(x) std::cout << RED << "[ error ] " << ENDC << x << std::endl;
 
 inline Int_t id_to_entry(int id) { return id-((id/100000)*100000); }
 inline Int_t id_to_file(int id)  { return id/100000-1; }

@@ -1,4 +1,5 @@
-/* plotter : filebox.h */
+/** @file filebox.h
+*/
 
 #ifndef ITEMSBOX_H
 #define ITEMSBOX_H
@@ -16,10 +17,8 @@ using namespace std;
 #include <TTree.h>
 #include <TChain.h>
 
+#include "common.h"
 #include "item.h"
-
-#define MSG(x) cout << ":: " << x << endl;
-#define ERROR(x,y) cout << "Error in <Plotter::" << x << ">: " << y << endl;
 
 class ItemsBox  : public TGVerticalFrame {
 
@@ -28,13 +27,13 @@ public:
   virtual ~ItemsBox();
 
 
-  void        AddFile(TString);
-  Item*       GetItem(int entry) { return items[entry]; };
-  TString     GetHeaderText() { return header->GetText(); };
-  TGListBox*  GetContent() { return content; };
-  TFile*      GetFile() { return file; };
+  void AddFile(TString);
+  Item* GetItem(int entry) { return items[entry]; };
+  TString GetHeaderText() { return header->GetText(); };
+  TGListBox* GetContent() { return content; };
+  TFile* GetFile() { return file; };
   TDirectory* GetCurrentDir()  { return file->GetDirectory(current_path); };
-  TTree*      GetCurrentTree() {  return (TTree*)file->Get(current_path); };
+  TTree* GetCurrentTree() {  return (TTree*)file->Get(current_path); };
 
   void Clear();
 
@@ -43,19 +42,19 @@ public:
   void OnItemClick(Int_t);
 
  protected:
-  void     CreateGui(TString);
-  void     RefreshGui();
+  void CreateGui(TString);
+  void RefreshGui();
 
-  void     BrowseItems(TString fname="");
-  void     BrowseTree(TString name);
-  void     GoBack();
-  void     ShowItems();
-  TString  GetFilenameFromPath(TString);
+  void BrowseItems(TString fname="");
+  void BrowseTree(TString name);
+  void GoBack();
+  void ShowItems();
+  TString GetFilenameFromPath(TString);
 
-  Int_t            n;
-  vector<TString>  filenames;
-  TFile            *file;
-  vector<Item*>    items;
+  Int_t n;
+  vector<TString> filenames;
+  TFile *file;
+  vector<Item*> items;
 
   TString last_path, current_path;
 
