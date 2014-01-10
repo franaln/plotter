@@ -6,7 +6,6 @@
 
 //C++
 #include <iostream>
-using namespace std;
 
 //ROOT
 #include <TROOT.h>
@@ -38,8 +37,6 @@ using namespace std;
 #include <TGNumberEntry.h>
 #include <TGLayout.h>
 #include <TGMenu.h>
-#include <TGDockableFrame.h>
-#include <TGSlider.h>
 #include <TGFileDialog.h>
 #include <TGStatusBar.h>
 #include <TGListTree.h>
@@ -50,36 +47,27 @@ using namespace std;
 
 class Item;
 class ItemsBox;
-
-namespace Plot {
-   enum  Type{
-     Normal,
-     Efficiency,
-     Ratio
-   };
-}
-
+class PlotObj;
+class Plot;
 
 class Plotter : public TGMainFrame {
 
  public:
-  Plotter(vector<TString> files, bool merge = false);
+  Plotter(std::vector<TString> files, bool merge=false);
   virtual ~Plotter();
 
   // Slots (must be public!)
   void OnItemClick(Int_t);
   void OnItemDoubleClick(TGFrame*, Int_t);
-  void OnButtonClearSelection();
-  void OnButtonDraw();
-  void OnButtonDrawEfficiency();
-  void OnButtonDrawRatio();
-  void OnButtonExit();
-  void OnButtonSaveColours();
+  void OnButtonClearSelection() { ClearSelection(); }
+  void OnButtonDraw() { Draw(); }
+  void OnButtonDrawEfficiency() { return; }
+  void OnButtonDrawRatio() { return; }
+  void OnButtonExit() { Exit(); }
   void ShowHideColours();
   void ShowHideCuts();
 
  private:
-
   // Gui widgets
   TGCompositeFrame *frame_main;
   TGCompositeFrame *frame_aux;
@@ -153,41 +141,47 @@ class Plotter : public TGMainFrame {
   void CreateCutsEntry();
   void CreateMergedFileBox();
   Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t);
-  void Exit();
-  void ExitError();
-  void Action(int, int);
+
+  inline void Exit() {
+    msg("Bye :)");
+    CloseWindow();
+  }
+
+  inline void ExitError() {
+    msg("Bye :(");
+    CloseWindow();
+  }
+
   void ClearSelection();
-  Int_t SaveCanvases();
-  void CloseWindow();
-  void LoadSettings();
-  void SaveSettings();
+  void SavePlots();
+  inline void CloseWindow() { gApplication->Terminate(0); }
+  //void LoadSettings();
+  //void SaveSettings();
   TGraphAsymmErrors* CreateEfficiency();
-  TH1* CreateRatio(int index_first = 1, int index_last = 0, bool down = false);
-  TH1* CreateRelativeDiff(int index_first = 1, int index_last = 0, bool down = false);
+  TH1* CreateRatio(int index_first=1, int index_last=0, bool down=false);
+  TH1* CreateRelativeDiff(int index_first=1, int index_last=0, bool down=false);
   void GetColours();
   Color_t ConvertStringToColour(const char *c);
   void SetStyle();
-  void CreatePlotList();
-  void CreateSelList();
   void ConfigurePlotList();
-  void Draw(Plot::Type);
-  void PlotHistos();
-  void PlotGraphs();
-  bool PlotRatios(bool down = false);
-  bool PlotRelativeDiffs(bool down = false);
+  void Draw();
+  //void DrawEfficiency() { return; }
+  //void DrawRatio() { return; }
+  bool PlotRatios(bool down=false);
+  bool PlotRelativeDiffs(bool down=false);
   bool PlotEfficiency();
-  void PlotLegend(Plot::Type);
-  vector<int> GetNumberOfObjectsInEachFile();
+  void PlotLegend();
+  std::vector<int> GetNumberOfObjectsInEachFile();
   void BeginMacro();
   void ResetMacro();
   void CreateMacro(OutputFormat);
-  TObject* GetObject(Item* it);
+
+  PlotObj* GetObject(Item* it);
 
   UInt_t m_number_of_files;
-  vector<TString> m_file_names;
-  vector<Item*> items_sel;
-  TList *plot_list;
-  vector<TCanvas*> canvas;
+  std::vector<TString> m_file_names;
+  std::vector<Item*> m_items;
+  std::vector<Plot*> m_plots;
   Double_t x_min, x_max, y_min, y_max;
   Pixel_t pcolors[20];
   Color_t colours[20];
@@ -195,11 +189,11 @@ class Plotter : public TGMainFrame {
   short marker_style;
   float marker_size;
   short line_width;
-  //Macro                 *macro;
+  //Macro *macro;
   TChain *merge_chain;
 
-  Bool_t  m_merge_mode;
-  Bool_t  m_macro_recording;
+  Bool_t m_merge_mode;
+  Bool_t m_macro_recording;
 
   ClassDef(Plotter, 0);
 };

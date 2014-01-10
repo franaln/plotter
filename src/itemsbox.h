@@ -5,7 +5,6 @@
 #define ITEMSBOX_H
 
 #include <iostream>
-using namespace std;
 
 #include <TROOT.h>
 #include <TGListBox.h>
@@ -52,9 +51,9 @@ public:
   TString GetFilenameFromPath(TString);
 
   Int_t n;
-  vector<TString> filenames;
+  std::vector<TString> filenames;
   TFile *file;
-  vector<Item*> items;
+  std::vector<Item*> items;
 
   TString last_path, current_path;
 

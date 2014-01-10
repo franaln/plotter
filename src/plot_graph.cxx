@@ -6,14 +6,13 @@
 #include <TGraph.h>
 #include <TH1.h>
 
-#include "plotobj.h"
 #include "plot.h"
 
 Plot::Plot()
 {
   m_name = Form("plot_%i", number_of_plot);
   m_canvas = new TCanvas(m_name, m_name, 800, 600);
-  //  m_list = new TList();
+  m_list = new TList();
 
   number_of_plot++;
 }
@@ -22,13 +21,12 @@ Plot::~Plot()
 {
   if(m_canvas) delete m_canvas;
   if(m_legend) delete m_legend;
-  //if(m_list) delete m_list;
+  if(m_list) delete m_list;
 }
 
-void Plot::Add(PlotObj *obj, Color_t colour)
+void Plot::Add(TObject *obj, Color_t colour)
 {
-  //m_list->Add(obj);
-  m_list.push_back(obj);
+  m_list->Add(obj);
   m_colours.push_back(colour);
 }
 
@@ -49,22 +47,9 @@ void Plot::Save()
   m_canvas->Print(m_name);
 }
 
-void Plot::Configure()
+void Plot::Create()
 {
-  // Rebin
-  // if(rebin > 1){
-  //   if(is1D)
-  //     h->Rebin(rebin);
-  //   else if(is2D){
-  //     h2->RebinX(rebin);
-  //     h2->RebinY(rebin);
-  //   }
-  //   else if(is3D){
-  //     h3->RebinX(rebin);
-  //     h3->RebinY(rebin);
-  //     h3->RebinZ(rebin);
-  //   }
-  // }
+  if(m_list->GetSize() == 0) return;
 
   //-- Axis
   x_min = 1e300;
@@ -72,15 +57,43 @@ void Plot::Configure()
   y_min = 1e300;
   y_max = -y_min;
 
-  // TIter next(m_list);
-  // while((TH1 *h = next())) {
-  //   if (h->GetXaxis()->GetXmin() < x_min) x_min = h->GetXaxis()->GetXmin();
-  //   if (h->GetXaxis()->GetXmax() > x_max) x_max = h->GetXaxis()->GetXmax();
-  //   if (h->GetMinimum() < y_min) y_min = h->GetMinimum();
-  //   if (h->GetMaximum() > y_max) y_max = h->GetMaximum();
-  // }
+  TIter next(m_list);
+  while((TH1 *h = next())) {
+    //obj->Draw(next.GetOption());
+
+    // TObjOptLink *lnk = (TObjOptLink*)m_list->FirstLink();
+    // while (lnk) {
+
+    //TObject *obj = lnk->GetObject();
+
+    //    if(obj->InheritsFrom("TH1")){
+    if (h->GetXaxis()->GetXmin() < x_min) x_min = h->GetXaxis()->GetXmin();
+    if (h->GetXaxis()->GetXmax() > x_max) x_max = h->GetXaxis()->GetXmax();
+    if (h->GetMinimum() < y_min) y_min = h->GetMinimum();
+    if (h->GetMaximum() > y_max) y_max = h->GetMaximum();
+    // }
+    // else if(obj->InheritsFrom("TGraph")){
+    //   TGraph *g = (TGraph*)obj;
+    //   if (g->GetXaxis()->GetXmin() < x_min) x_min = g->GetXaxis()->GetXmin();
+    //   if (g->GetXaxis()->GetXmax() > x_max) x_max = g->GetXaxis()->GetXmax();
+
+    //   Double_t x = 0; Double_t y = 0;
+    //   for(int i=0; i<g->GetN(); i++){
+    //     g->GetPoint(i, x, y);
+    //     if (y < y_min) y_min = y;
+    //     if (y > y_max) y_max = y;
+    //   }
+    //   delete g;
+    // }
+    //lnk = (TObjOptLink*)lnk->Next();
+  }
 
   y_max *= 1.1;
+
+
+  //TH1 *h; TGraph *g;
+
+  //if(do_normalise || do_normalise_to_first) y_max /= h->Integral();
 
   if(m_canvas->GetLogy()){
     if(y_min > 0)  y_min *= .9;
@@ -88,59 +101,111 @@ void Plot::Configure()
   }
   else if(y_min >= 0) y_min = 1.e-3;
 
-  //-- Configure first object
-  // Check if all the histos are the same histo (but from different files :P)
-  // bool same = true;
-  // for(int i=1; i<m_list->GetSize(); i++){
-  //   if(m_list->At(i)->GetName() != m_list->At(0)->GetName()){
-  //     same = false;
-  //     break;
-  //   }
-  // }
 
-  //TH1 *h = (TH1*)m_list->At(0);
+  //-- Configure first object
+  //bool first_is_histo = m_list->At(0)->InheritsFrom("TH1");
+  //bool first_is_graph = m_list->At(0)->InheritsFrom("TGraph");
+
+  // Check if all the histos are the same histo (but from different files :P)
+  bool same = true;
+  for(int i=1; i<m_list->GetSize(); i++){
+    if(m_list->At(i)->GetName() != m_list->At(0)->GetName()){
+      same = false;
+      break;
+    }
+  }
+
+  //if(first_is_histo){
+
+  TH1 *h = (TH1*)m_list->At(0);
 
   // y axis
-  //h->GetYaxis()->SetRangeUser(y_min, y_max);
+  h->GetYaxis()->SetRangeUser(y_min, y_max);
 
   // x axis title
-  //if(m_list->GetSize() == 1) h->GetXaxis()->SetTitle(h->GetName());
-  //else if(same) h->GetXaxis()->SetTitle(h->GetName());
+  if(m_list->GetSize() == 1) h->GetXaxis()->SetTitle(h->GetName());
+  else if(same) h->GetXaxis()->SetTitle(h->GetName());
 
-  //if(show_stats) h->SetStats(1);
-  //else           h->SetStats(0);
+  if(show_stats) h->SetStats(1);
+  else           h->SetStats(0);
 
-  //TIter next(m_list);
-  //while((h = (TH1*)next())) {
-    //    h->SetLineColor(m_colours[k]);
-    //  h->SetMarkerColor(m_colours[k]);
+  // }
+  // else if(first_is_graph){
+  //   g = (TGraph*)m_list->At(0);
+
+  //   // y axis
+  //   g->GetYaxis()->SetRangeUser(y_min, y_max);
+
+  //   // x axis title
+  //   if(m_list->GetSize() == 1) g->GetXaxis()->SetTitle(m_list->At(0)->GetName());
+  //   else if(same) g->GetXaxis()->SetTitle(m_list->At(0)->GetName());
+  // }
+
+  TIter next(m_list);
+  while((TH1 *h = next())) {
+    // bool is_histo = lnk->GetObject()->InheritsFrom("TH1");
+    // bool is_graph = lnk->GetObject()->InheritsFrom("TGraph");
+
+    //    if(is_histo){
+    h->SetLineColor(m_colours[k]);
+    h->SetMarkerColor(m_colours[k]);
     //if(check_fill[k]->GetState()) h->SetFillColor(colours[k]);
-    //h->SetMarkerStyle(20);
-    //h->SetMarkerSize(0.8);
-    //h->SetLineWidth(2);
+    //h->SetMarkerStyle(marker_style);
+    //h->SetMarkerSize(marker_size);
+    //     h->SetLineWidth(line_width);
+    // }
+    // else if(is_graph){
+    //   g = (TGraph*)obj;
+    //   g->SetLineColor(m_colours[k]);
+    //   g->SetMarkerColor(m_colours[k]);
+    //     g->SetMarkerStyle(marker_style);
+    //     g->SetMarkerSize(marker_size);
+    //     g->SetLineWidth(line_width);
+    //}
+  }
 
-    //bool is2D = h->IsA()->InheritsFrom(TH2::Class());
-    //bool is3D = h->IsA()->InheritsFrom(TH3::Class());
-    //bool is1D = false;
-    //if(!is2D && !is3D) is1D = true;
+  // if(items_sel[k]->IsTypeHist()){
 
-    //TH2 *h2; TH3 *h3;
-    //    if(is2D) h2 = (TH2*) h;
-    //if(is3D) h3 = (TH3*) h;
+  //   h = (TH1*)GetObject(items_sel[k]);
 
-    //if(do_normalise && do_normalise_to_first)
-      //      error("I'm confused o.O! Both normalise check buttons are selected. I'll do what I want.");
-    //   if(do_normalise)   h->Scale(1/h->Integral());
-    //   if(do_normalise_to_first && plot_list->GetSize()!=0)
-    // //     h->Scale( ((TH1*)plot_list->At(0))->Integral()/h->Integral());
+  //   if( h->GetEntries() == 0 ) {
+  //     error(items_sel[k]->GetName() << " is empty.");
+  //     continue;
+  //   }
 
+  //   if(!h) continue;
 
-  //}
+  //   h->SetName(items_sel[k]->GetName());
+  //   h->SetTitle(items_sel[k]->GetName());
 
+  //   Bool_t is2D = h->IsA()->InheritsFrom(TH2::Class());
+  //   Bool_t is3D = h->IsA()->InheritsFrom(TH3::Class());
+  //   Bool_t is1D = kFALSE; if(!is2D && !is3D) is1D = kTRUE;
 
+  //   TH2 *h2; TH3 *h3;
+  //   if(is2D) h2 = (TH2*) h;
+  //   if(is3D) h3 = (TH3*) h;
 
+  //   if(check_normalise->GetState() && check_normalise2->GetState())
+  //     error("I'm confused o.O! Both normalise check buttons are selected. I'll do what I want.");
+  //   if(check_normalise->GetState())   h->Scale(1/h->Integral());
+  //   if(check_normalise2->GetState() && plot_list->GetSize()!=0)
+  //     h->Scale( ((TH1*)plot_list->At(0))->Integral()/h->Integral());
 
-
+  //   Int_t rebin = nentry_rebin->GetIntNumber();
+  //   if(rebin > 1){
+  //     if(is1D)
+  //       h->Rebin(rebin);
+  //     else if(is2D){
+  //       h2->RebinX(rebin);
+  //       h2->RebinY(rebin);
+  //     }
+  //     else if(is3D){
+  //       h3->RebinX(rebin);
+  //       h3->RebinY(rebin);
+  //       h3->RebinZ(rebin);
+  //     }
+  //   }
 
   // Draw options
   //   TString draw_opt = "";
@@ -187,90 +252,70 @@ void Plot::Configure()
     //if(checkOrder->GetState())  sort(items_sel.begin(), items_sel.end(), SortItems);
 
 
-}
+  if(include_ratio){
+    TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
+    TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
 
-void Plot::Create()
-{
-  if(m_list.size() == 0) return;
+    up->SetLeftMargin(0.08);
+    up->SetRightMargin(0.05);
+    up->SetBottomMargin(0.01);
+    up->SetTopMargin(0.06);
 
+    down->SetLeftMargin(0.08);
+    down->SetRightMargin(0.05);
+    down->SetBottomMargin(0.2);
+    down->SetTopMargin(0.01);
 
-  //if(do_normalise || do_normalise_to_first) y_max /= h->Integral();
+    if(do_logx) up->SetLogx();
+    if(do_logy) up->SetLogy();
 
-  // TIter next(m_list);
-  // while((TH1 *h = next())){
+    up->Draw();
+    down->Draw();
 
-  //   if(h->GetEntries() == 0) {
-  //     error(items_sel[k]->GetName() << " is empty.");
-  //     continue;
-  //   }
+    up->cd();
+    PlotHistos();
 
-  //   h->Draw(obj->GetOption());
-  // }
-
-  for(int i=0; i<m_list.size(); i++){
-    m_list[i]->Draw();
+    down->cd();
+    PlotRatios();
   }
+  else if(include_diff){
 
+    TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
+    TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
 
-  // if(include_ratio){
-  //   TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
-  //   TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
+    up->SetLeftMargin(0.08);
+    up->SetRightMargin(0.05);
+    up->SetBottomMargin(0.01);
+    up->SetTopMargin(0.06);
 
-  //   up->SetLeftMargin(0.08);
-  //   up->SetRightMargin(0.05);
-  //   up->SetBottomMargin(0.01);
-  //   up->SetTopMargin(0.06);
+    down->SetLeftMargin(0.08);
+    down->SetRightMargin(0.05);
+    down->SetBottomMargin(0.2);
+    down->SetTopMargin(0.01);
 
-  //   down->SetLeftMargin(0.08);
-  //   down->SetRightMargin(0.05);
-  //   down->SetBottomMargin(0.2);
-  //   down->SetTopMargin(0.01);
+    if(do_logx) up->SetLogx();
+    if(do_logy) up->SetLogy();
 
-  //   if(do_logx) up->SetLogx();
-  //   if(do_logy) up->SetLogy();
+    up->Draw();
+    down->Draw();
 
-  //   up->Draw();
-  //   down->Draw();
+    up->cd();
+    PlotHistos();
 
-  //   up->cd();
-  //   //PlotHistos();
-
-  //   down->cd();
-  //   //PlotRatios();
-  // }
-  // else if(include_diff){
-
-  //   TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
-  //   TPad *down = new TPad("lowerPad", "lowerPad", .001, .001,  .999, .28);
-
-  //   up->SetLeftMargin(0.08);
-  //   up->SetRightMargin(0.05);
-  //   up->SetBottomMargin(0.01);
-  //   up->SetTopMargin(0.06);
-
-  //   down->SetLeftMargin(0.08);
-  //   down->SetRightMargin(0.05);
-  //   down->SetBottomMargin(0.2);
-  //   down->SetTopMargin(0.01);
-
-  //   if(do_logx) up->SetLogx();
-  //   if(do_logy) up->SetLogy();
-
-  //   up->Draw();
-  //   down->Draw();
-
-  //   up->cd();
-  //   //PlotHistos();
-
-  //   down->cd();
-  //   //PlotRelativeDiffs();
-  // }
+    down->cd();
+    PlotRelativeDiffs();
+  }
   //else {
   //if(_macroRecording) macro->AddCanvas(canvas[nro]->GetName());
   //if(checkLogX->GetState()) canvas[nro]->SetLogx();
   //       if(checkLogY->GetState()) canvas[nro]->SetLogy();
 
 
+  TIter next(m_list);
+  TObject *obj;
+  while((obj = next())){
+    obj->Draw(obj->GetOption());
+  }
 
 
   return;

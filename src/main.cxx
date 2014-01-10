@@ -8,10 +8,10 @@
    @brief GUI interface to easily plot ROOT histograms, trees or graphs
 */
 
-#include "plotter.h"
-
 #define NAME    "plotter"
 #define VERSION "0.4"
+
+#include "plotter.h"
 
 void show_usage()
 {
@@ -24,7 +24,7 @@ void show_usage()
 int main(int argc, char **argv)
 {
 
-  if (gROOT->IsBatch()) {
+  if(gROOT->IsBatch()) {
     fprintf(stderr, "%s: cannot run in batch mode\n", argv[0]);
     return 1;
   }
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   }
 
   // Get files from args
-  vector<TString> files;
+  std::vector<TString> files;
   for (int i = argpos; i < argc; i++){
     TString tmp = argv[i];
     files.push_back(tmp);
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
   // Application
   TApplication *rootApp = new TApplication("Plotter", &argc, argv);
 
-  cout << "[plotter]" << endl;
+  std::cout << NAME << " " << VERSION << std::endl;
 
   Plotter p(files, merge);
 

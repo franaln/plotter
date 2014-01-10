@@ -12,8 +12,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace std;
-
 enum OutputFormat {
   MRoot,
   MPython
@@ -55,33 +53,32 @@ class HistoInfo
   Int_t    RebinNumber() { return (rebin >1) ? rebin : 0; };
   Double_t ScaleFactor() { return scale_factor; };
   TString  MacroName();
-  TString  LegendText(){ return leg_text; }; 
+  TString  LegendText(){ return leg_text; };
 
 };
 
 class CanvasInfo
 {
-  
+
  private:
-  
+
   TString name;
   Axis xaxis, yaxis;
-  vector<HistoInfo*> histos;
+  std::vector<HistoInfo*> histos;
 
  public:
-  
+
   CanvasInfo(TString _name);
   virtual ~CanvasInfo();
 
   TString         Name(){ return name; };
-  //vector<int>     FilesVector(){ return files; };
-  vector<HistoInfo*> Histos(){ return histos; };
+  std::vector<HistoInfo*> Histos(){ return histos; };
   HistoInfo*         Histo(int index){ return histos[index]; };
   Int_t              NumberOfHistos(){ return histos.size(); };
 
   void AddHisto(HistoInfo* histo);
-  void AddLegend(vector<TString>);
-  
+  void AddLegend(std::vector<TString>);
+
 };
 
 
@@ -90,18 +87,18 @@ class Macro
 
  private:
   TString name;
-  vector<TString>      files;
-  vector<CanvasInfo*>  canvases;
+  std::vector<TString>      files;
+  std::vector<CanvasInfo*>  canvases;
   Int_t canvas_counter;
 
  public:
   Macro(TString _name);
   virtual ~Macro();
-  
+
   void   AddFile(TString _file);
   void   AddCanvas(TString);
   void   AddHisto(HistoInfo *h);
-  void   AddLegend(vector<TString>);
+  void   AddLegend(std::vector<TString>);
   void   Reset();
   void   SaveMacro(TString, OutputFormat);
 

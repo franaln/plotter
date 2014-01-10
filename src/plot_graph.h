@@ -10,8 +10,6 @@
 #include <TCanvas.h>
 
 
-class PlotObj;
-
 /** Base class for a root plot
  */
 class Plot {
@@ -20,7 +18,7 @@ class Plot {
   Plot();
   ~Plot();
 
-  void Add(PlotObj*, Color_t colour=kBlack/*, ...*/);
+  void Add(TObject*, Color_t colour=kBlack/*, ...*/);
   void Show();
   void Save();
   void Dump();
@@ -31,7 +29,6 @@ class Plot {
   static int number_of_plot;
 
  private:
-  void Configure();
   void Create();
   void CreateLegend();
 
@@ -39,7 +36,7 @@ class Plot {
   TCanvas *m_canvas;
   TLegend *m_legend;
 
-  std::vector<PlotObj*> m_list; //TList *m_list;
+  TList *m_list;
   std::vector<short> m_colours;
 
   double x_min, x_max, y_min, y_max;
@@ -47,7 +44,6 @@ class Plot {
   bool include_ratio;
   bool include_diff;
 
-  int rebin;
   bool do_logx;
   bool do_logy;
   bool do_normalise;

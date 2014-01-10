@@ -3,13 +3,13 @@
 CXX      := g++
 CXXFLAGS := -g -Wall
 
-ROOTLIBS  := $(shell root-config --libs)
+ROOTLIBS  := $(shell root-config --glibs)
 ROOTFLAGS := $(shell root-config --cflags)
 
 OBJDIR    := obj
 SRCDIR    := src
 
-_OBJ      := main.o plotter.o item.o itemsbox.o plot.o Dic.o
+_OBJ      := main.o plotter.o item.o itemsbox.o plot.o plotobj.o Dic.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 _HEADER   := plotter.h itemsbox.h
@@ -24,7 +24,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJDIR) $(DIC) $(OBJ)
 	@echo "Linking $@"
-	@$(CXX)  $(CXXFLAGS) $(OBJ) $(ROOTLIBS) $(ROOTFLAGS) -lGui -o $@
+	@$(CXX)  $(CXXFLAGS) $(OBJ) $(ROOTLIBS) $(ROOTFLAGS) -o $@
 	@echo "$@ done."
 	@echo "Now you can install it in /usr/bin using \"make install\""
 
