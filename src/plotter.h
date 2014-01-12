@@ -43,11 +43,11 @@
 
 //plotter
 #include "common.h"
-#include "macro.h"
+//#include "macro.h"
 
 class Item;
 class ItemsBox;
-class PlotObj;
+class Obj;
 class Plot;
 
 class Plotter : public TGMainFrame {
@@ -61,8 +61,8 @@ class Plotter : public TGMainFrame {
   void OnItemDoubleClick(TGFrame*, Int_t);
   void OnButtonClearSelection() { ClearSelection(); }
   void OnButtonDraw() { Draw(); }
-  void OnButtonDrawEfficiency() { return; }
-  void OnButtonDrawRatio() { return; }
+  void OnButtonDrawEfficiency() { DrawEfficiency(); }
+  void OnButtonDrawRatio() { DrawRatio(); }
   void OnButtonExit() { Exit(); }
   void ShowHideColours();
   void ShowHideCuts();
@@ -155,28 +155,26 @@ class Plotter : public TGMainFrame {
   void ClearSelection();
   void SavePlots();
   inline void CloseWindow() { gApplication->Terminate(0); }
-  //void LoadSettings();
+  void LoadSettings();
   //void SaveSettings();
-  TGraphAsymmErrors* CreateEfficiency();
-  TH1* CreateRatio(int index_first=1, int index_last=0, bool down=false);
-  TH1* CreateRelativeDiff(int index_first=1, int index_last=0, bool down=false);
+  //TGraphAsymmErrors* CreateEfficiency();
+  //TH1* CreateRatio(int index_first=1, int index_last=0, bool down=false);
+  //TH1* CreateRelativeDiff(int index_first=1, int index_last=0, bool down=false);
   void GetColours();
   Color_t ConvertStringToColour(const char *c);
   void SetStyle();
   void ConfigurePlotList();
   void Draw();
-  //void DrawEfficiency() { return; }
-  //void DrawRatio() { return; }
-  bool PlotRatios(bool down=false);
-  bool PlotRelativeDiffs(bool down=false);
-  bool PlotEfficiency();
-  void PlotLegend();
+  void DrawEfficiency();
+  void DrawRatio();
+  //bool PlotRatios(bool down=false);
+  //bool PlotRelativeDiffs(bool down=false);
+  //bool PlotEfficiency();
+  //void PlotLegend();
   std::vector<int> GetNumberOfObjectsInEachFile();
-  void BeginMacro();
-  void ResetMacro();
-  void CreateMacro(OutputFormat);
+  //void CreateMacro(OutputFormat);
 
-  PlotObj* GetObject(Item* it);
+  Obj* GetObject(Item* it);
 
   UInt_t m_number_of_files;
   std::vector<TString> m_file_names;
@@ -189,7 +187,7 @@ class Plotter : public TGMainFrame {
   short marker_style;
   float marker_size;
   short line_width;
-  //Macro *macro;
+  //  Macro *macro;
   TChain *merge_chain;
 
   Bool_t m_merge_mode;

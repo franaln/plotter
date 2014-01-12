@@ -19,8 +19,9 @@
 
 #include "item.h"
 #include "itemsbox.h"
-#include "plotobj.h"
+#include "obj.h"
 #include "plot.h"
+//#include "macro.h"
 
 const char* settings_file = ".plotterrc";
 
@@ -114,7 +115,7 @@ Plotter::Plotter(std::vector<TString> filenames, bool merge) :
   }
 
   // Load settings and style. Add AtlasStyle?
-  //  LoadSettings();
+  LoadSettings();
   SetStyle();
 
   // Create Gui
@@ -291,11 +292,11 @@ void Plotter::CreateOptionsFrame()
   button_draw_efficiency->SetToolTipText("Plot the efficiency between the two selected histos (hlast/hfirst).");
   button_draw_ratio->SetToolTipText("Plot the ratio between the selected histos wrt the first one selected (hn/hfirst).");
 
-  // button_clear_selection->SetStyle("modern");
-  // button_draw->SetStyle("modern");
-  // button_draw_efficiency->SetStyle("modern");
-  // button_draw_ratio->SetStyle("modern");
-  // button_exit->SetStyle("modern");
+  button_clear_selection->SetStyle("modern");
+  button_draw->SetStyle("modern");
+  button_draw_efficiency->SetStyle("modern");
+  button_draw_ratio->SetStyle("modern");
+  button_exit->SetStyle("modern");
 
   button_clear_selection->Associate(this);
   button_draw->Associate(this);
@@ -305,8 +306,8 @@ void Plotter::CreateOptionsFrame()
 
   button_clear_selection->Connect("Clicked()", "Plotter", this, "OnButtonClearSelection()");
   button_draw->Connect("Clicked()", "Plotter", this, "OnButtonDraw()");
-  button_draw_efficiency->Connect("Clicked()", "Plotter", this, "draw(\"Plot::Efficiency\")");
-  button_draw_ratio->Connect("Clicked()", "Plotter", this, "draw(\"Plot::Ratio\")");
+  button_draw_efficiency->Connect("Clicked()", "Plotter", this, "OnButtonDrawEfficiency()");
+  button_draw_ratio->Connect("Clicked()", "Plotter", this, "OnButtonDrawRatio()");
   button_exit->Connect("Clicked()", "Plotter", this, "OnButtonExit()");
 
   //-- General Options
@@ -439,7 +440,6 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
         break;
 
       case M_FILE_SETTINGS:
-        //	new SettingsBox(fClient->GetRoot(), this, 400, 200);
         break;
 
       case M_VIEW_CUTS:
@@ -454,25 +454,17 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
         }
         break;
 
-      case M_CREATE_ADD:
-        {
-          //      CreateOther(0);
-          //      AddHistos();
-        }
-        break;
-
       case M_MACRO_BEGIN:
         {
-          //macro = new Macro("macro");
-          // for(unsigned int i=0; i<number_of_files; i++){
-          //   macro->AddFile(file_names[i]);
+          // macro = new Macro("macro");
+          // for(unsigned int i=0; i<m_number_of_files; i++){
+          //   macro->AddFile(m_file_names[i]);
           // }
-          // menuMacro->DisableEntry(M_MACRO_BEGIN);
-          // menuMacro->EnableEntry(M_MACRO_RESET);
-          // menuMacro->EnableEntry(M_MACRO_CREATE_ROOT);
-          // menuMacro->EnableEntry(M_MACRO_CREATE_PYTHON);
-          // _macroRecording = true;
-          // return;
+          // menu_macro->DisableEntry(M_MACRO_BEGIN);
+          // menu_macro->EnableEntry(M_MACRO_RESET);
+          // menu_macro->EnableEntry(M_MACRO_CREATE_ROOT);
+          // menu_macro->EnableEntry(M_MACRO_CREATE_PYTHON);
+          // m_macro_recording = true;
         }
         break;
 
@@ -485,13 +477,13 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
 
       case M_MACRO_CREATE_ROOT:
         {
-          CreateMacro(MRoot);
+          //CreateMacro(MRoot);
         }
         break;
 
       case M_MACRO_CREATE_PYTHON:
         {
-          CreateMacro(MPython);
+          //CreateMacro(MPython);
         }
         break;
 
@@ -613,11 +605,11 @@ void Plotter::SetStyle()
 
 void Plotter::GetColours()
 {
-  //for(int k=0; k<plot_list->GetSize(); k++){
-  //   colours[k] = TColor::GetColor(pcolors[k]);
-  //   if(frame_main->IsVisible(frame_colours))
-  //     colours[k] = TColor::GetColor(colorselect[k]->GetColor());
-  // }
+  for(int k=0; k<m_items.size(); k++){
+    colours[k] = TColor::GetColor(pcolors[k]);
+    if(frame_main->IsVisible(frame_colours))
+      colours[k] = TColor::GetColor(colorselect[k]->GetColor());
+  }
 }
 
 /**
@@ -628,7 +620,6 @@ void Plotter::GetColours()
 void Plotter::ClearSelection()
 {
   m_items.clear();
-
   for(UInt_t i=0; i<m_number_of_files; i++){
     boxes[i]->Clear();
   }
@@ -636,13 +627,13 @@ void Plotter::ClearSelection()
   return;
 }
 
-PlotObj* Plotter::GetObject(Item* it)
+Obj* Plotter::GetObject(Item* it)
 {
   int file = it->GetFile();
   TString name = it->GetName();
 
   TObject *obj;
-  PlotObj *pobj;
+  Obj *pobj;
 
   if(it->IsBranch()){
     TString cut = "";
@@ -658,186 +649,61 @@ PlotObj* Plotter::GetObject(Item* it)
     obj = dir->Get(name);
   }
 
-  pobj = new PlotObj((TH1*)obj);
+  pobj = new Obj((TH1*)obj);
 
   return pobj;
 }
 
 /** Draw function. Creates a plot with the selected items and options
 */
-
-// If Normal: plot the items
-// If Ratio: plot the ratio between the (N-1) last items wrt the first one.
-// If Efficiency: plot the efficiency of the last item wrt the first one.
-
-// void Plotter::DrawEfficiency()
-// {
-//   if(m_items.size() < 2) return;
-// }
-
-// void Plotter::DrawRatio()
-// {
-//   if(m_items.size() < 2) return;
-// }
-
 void Plotter::Draw()
 {
   if(m_items.size()==0) return;
 
   Plot *p = new Plot();
 
-  //  GetColours();
+  GetColours();
 
   for(UInt_t k=0; k<m_items.size(); k++){
-
-    //  if(!m_items[k]->IsPlotable()) continue;
-
-    p->Add(GetObject(m_items[k]));//, colours[k]);
-
-
+    if(!m_items[k]->IsPlotable()) continue;
+    p->Add(GetObject(m_items[k]), colours[k], check_fill[k]->GetState());
   }
 
   if(check_include_ratio->GetState()) p->SetIncludeRatio(true);
   else if(check_include_diff->GetState()) p->SetIncludeDiff(true);
 
 
+  TString draw_opts = "";
+  if(check_text->GetState()) draw_opts += "text,";
+  if(check_hist->GetState()) draw_opts += "hist,";
+  if(check_p->GetState())    draw_opts += "P,";
+  if(check_pie->GetState())  draw_opts += "PIE,";
+
+  if(radio_scatter->GetState())  draw_opts += "scat,";
+  else if(radio_box->GetState()) draw_opts += "box,";
+  else  draw_opts += "colz,";
+
+  p->SetDrawOptions(draw_opts);
 
   // // Plot order: 1) Selected order (default). 2) Order by file and entry.
   // if(check_order->GetState())  sort(m_items.begin(), m_items.end(), SortVs);
 
-  p->Show();
+  p->Create();
+
   m_plots.push_back(p);
 
   return;
 }
 
-
-bool Plotter::PlotRelativeDiffs(bool down)
+void Plotter::DrawEfficiency()
 {
-  /* Plot the relative differences of the selected histograms with respect the first one.
-     diff = (hN - h1)/h1 */
-
-  // Int_t nDiffs = items_sel.size() - 1;
-
-  // if(nDiffs==0) return false;
-
-  // TH1 *diff[nDiffs];
-  // for(int k=0; k<nDiffs; k++){
-  //   diff[k] = CreateRelativeDiff(k+1, 0, down);
-  // }
-
-  // if(!diff[0]) {
-  //   error("There are no differences to plot.");
-  //   return false;
-  // }
-
-  // diff[0]->GetYaxis()->SetTitle("Relative difference");
-  // diff[0]->SetStats(0);
-  // if(down) {
-  //   diff[0]->GetXaxis()->SetRangeUser(x_min,x_max);
-  //   diff[0]->GetYaxis()->CenterTitle();
-  //   diff[0]->GetXaxis()->SetTitleSize( 0.08 );
-  //   diff[0]->GetXaxis()->SetLabelSize( 0.08 );
-  //   diff[0]->GetYaxis()->SetLabelSize( 0.08 );
-  //   diff[0]->GetYaxis()->SetTitleSize( 0.08 );
-  //   diff[0]->GetYaxis()->SetTitleOffset( 0.4 );
-  //   diff[0]->GetXaxis()->SetTitleOffset( 1.1 );
-  // }
-
-  // GetColours();
-  // for(int n=0; n<nDiffs; n++){
-  //   if(down){
-  //     diff[n]->SetMarkerColor(colours[n+1]);
-  //     diff[n]->SetLineColor(colours[n+1]);
-  //   }
-  //   else{
-  //     diff[n]->SetMarkerColor(colours[n]);
-  //     diff[n]->SetLineColor(colours[n]);
-  //   }
-
-  //   if(n==0) diff[n]->Draw();
-  //   else diff[n]->Draw("same");
-  // }
-
-  return true;
+  if(m_items.size() < 2) return;
 }
 
-// void Plotter::PlotLegend()
-// {
-  // vector<TString> legend;
-
-  // if( items_sel.size()==1 ){ //1 solo histo de 1 solo file, return sin legend
-  //   return;
-  // }
-
-  // // Legend config
-  // vector<int> hsv = GetNumberOfObjectsInEachFile();
-
-  // bool mtitle=false; bool mfile=false; bool mtitlefile=false;
-  // if( hsv[0]==1 && hsv[1]==1 ){ //1 solo histo de >1 files
-  //   mfile=true;
-  // }
-  // else if(hsv[0] && !hsv[1]){ // >1 histo de 1 solo file
-  //   mtitle=true;
-  // }
-  // else if(hsv[0] && hsv[1] ){ // >1 histo de >1 file
-  //   mtitlefile=true;
-  // }
-
-  // vector<TString> legtemp;
-  // for(unsigned int k=0; k<items_sel.size(); k++){
-
-  //     TString tmp = "";
-  //     if(mfile){
-  //       tmp = boxes[items_sel[k]->GetFile()]->GetHeaderText();
-  //     }
-  //     else if(mtitle){
-  //       items_sel[k]->GetLegendText();
-  //     }
-  //     else if(mtitlefile){
-  //       tmp = " (" + boxes[items_sel[k]->GetFile()]->GetHeaderText() + ")";
-  //       tmp=items_sel[k]->GetLegendText()+tmp;
-  //     }
-  //     legend.push_back(tmp);
-  //     legtemp.push_back(tmp);
-  // }
-
-  // // if(type==Plot::Ratio){
-  // //   for(unsigned int i=1;i<legend.size();i++){
-  // //     legend[i] += "/";
-  // //     legend[i] += legend[0];
-  // //   }
-  // // }
-
-  // // legend size
-  // sort(legtemp.begin(), legtemp.end());
-  // reverse(legtemp.begin(),legtemp.end());
-
-  // Double_t maxwidth = legtemp[0].Sizeof() * 0.01;
-  // Double_t maxheight = items_sel.size() * 0.035;
-
-  // Double_t xmin, xmax, ymin, ymax;
-
-  // xmax = 0.86; ymax = 0.86;
-  // ymin = (ymax - maxheight)>0.2 ? ymax - maxheight : 0.2;
-  // xmin = (xmax - maxwidth)>0.2  ? xmax - maxwidth  : 0.2;
-
-  // // Create and plot legend
-  // TLegend *leg = new TLegend(xmin, ymin, xmax, ymax);
-  // leg->SetFillColor(0);
-  // unsigned int begin = type!=Plot::Normal ? 1 : 0;
-  // for(unsigned int k=begin; k<items_sel.size(); k++){
-  //   leg->AddEntry(plot_list->At(k), legend[k]);
-  // }
-  // leg->Draw();
-
-
-  //if(_macroRecording){
-    //macro->AddLegend(legend);
-  //}
-
-//   return;
-// }
+void Plotter::DrawRatio()
+{
+  if(m_items.size() < 2) return;
+}
 
 std::vector<int> Plotter::GetNumberOfObjectsInEachFile()
 {
@@ -865,90 +731,13 @@ void Plotter::SavePlots()
   return;
 }
 
-/** Create efficiency if there are two selected histos.
- */
-TGraphAsymmErrors* Plotter::CreateEfficiency()
-{
-  if(m_items.size() != 2) {
-    error("Solo funciona si seleccionas dos histogramas.");
-    return 0;
-  }
-
-  // if(!plot_list->At(0)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(1)->IsA()->InheritsFrom(TH1::Class())) {
-  //   error("Solo funciona si seleccionas dos histogramas.");
-  //   return 0;
-  // }
-
-  // TH1 *h_numerator, *h_denominator;
-
-  // h_numerator   = (TH1*) plot_list->At(1)->Clone("h_numerator");
-  // h_denominator = (TH1*) plot_list->At(0)->Clone("h_denominator");
-
-  // TGraphAsymmErrors *gr = new TGraphAsymmErrors();
-
-  // gr->Divide(h_numerator, h_denominator, "cl=0.683 b(0.5,0.5) mode");
-
-  // return gr;
-}
-
-TH1* Plotter::CreateRatio(int index_first, int index_last, bool down)
-{
-
-  //if(!down) CreatePlotList();
-
-  // if(plot_list->GetSize()!=2) { error("Solo funciona con dos histogramas."); return 0; }
-
-  // if(!plot_list->At(index_first)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(index_last)->IsA()->InheritsFrom(TH1::Class())) {
-  //   error("Solo funciona si seleccionas dos histogramas."); return 0;
-  // }
-
-  // TH1 *h_numerator, *h_denominator;
-
-  // h_numerator   = (TH1*)plot_list->At(index_first)->Clone("h_numerator");
-  // h_denominator = (TH1*)plot_list->At(index_last)->Clone("h_denominator");
-
-  // TH1 *ratio = (TH1*)h_numerator->Clone("ratio");
-
-  // ratio->Divide(h_denominator);
-
-  // return ratio;
-}
-
-TH1* Plotter::CreateRelativeDiff(int index_first, int index_last, bool down)
-{
-  // Compute the relative difference between two histograms
-  // diff = (h2 - h1)/h1
-
-  // if(!down) CreatePlotList();
-
-  // if(plot_list->GetSize()!=2) { error("Solo con dos histogramas."); return 0; }
-
-  // if(!plot_list->At(index_first)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(index_last)->IsA()->InheritsFrom(TH1::Class())) {
-  //   error("Solo funciona con dos histogramas."); return 0;
-  // }
-
-  // TH1 *h_first, *h_last;
-
-  // h_first = (TH1*)plot_list->At(index_first)->Clone("h_first");
-  // h_last  = (TH1*)plot_list->At(index_last)->Clone("h_last");
-
-  // TH1 *diff = (TH1*)h_first->Clone("diff");
-
-  // diff->Add(h_last, -1.0)  ;
-  // diff->Divide(h_first);
-
-  // return diff;
-}
-
-
 /* Macro
    ----- */
 
 /** End/Create/Save macro. Open a dialog to select the macro name.
 */
-void Plotter::CreateMacro(OutputFormat type)
-{
-
+//void Plotter::CreateMacro(OutputFormat type)
+//{
   // static TString dir(".");
   // TGFileInfo fi;
   // fi.fIniDir    = StrDup(dir);
@@ -961,7 +750,7 @@ void Plotter::CreateMacro(OutputFormat type)
   // }
 
   // return;
-}
+//}
 
 
 
@@ -970,23 +759,23 @@ void Plotter::CreateMacro(OutputFormat type)
 
 /** Load configuration values from .plotterrc if exists, or the default values
  */
-// void Plotter::LoadSettings()
-// {
-//   TEnv env(settings_file);
+void Plotter::LoadSettings()
+{
+  TEnv env(settings_file);
 
-//   for(Int_t k=0; k<20; k++){
-//     char temp[50]; sprintf(temp, "Colour%d", k);
-//     Color_t ctemp = ConvertStringToColour(env.GetValue(temp, default_colours[k]));
-//     pcolors[k] = TColor::Number2Pixel(ctemp);
-//   }
+  for(Int_t k=0; k<20; k++){
+    char temp[50]; sprintf(temp, "Colour%d", k);
+    Color_t ctemp = ConvertStringToColour(env.GetValue(temp, default_colours[k]));
+    pcolors[k] = TColor::Number2Pixel(ctemp);
+  }
 
-//   //Style
-//   marker_size  = 0.8; //env.GetValue("MarkerSize", 0.8);
-//   marker_style = 20; //env.GetValue("MarkerStyle", 20);
-//   line_width   = 1; //env.GetValue("LineWidth", 1);
+  //Style
+  marker_size  = 0.8; //env.GetValue("MarkerSize", 0.8);
+  marker_style = 20; //env.GetValue("MarkerStyle", 20);
+  line_width   = 1; //env.GetValue("LineWidth", 1);
 
-//   return;
-// }
+  return;
+}
 
 // void Plotter::SaveSettings()
 // {
@@ -1008,7 +797,6 @@ void Plotter::CreateMacro(OutputFormat type)
 */
 Color_t Plotter::ConvertStringToColour(const char *c)
 {
-
   TString str(c);
   Color_t colour;
 
@@ -1093,7 +881,6 @@ void Plotter::OnItemClick(Int_t id)
 
 /** Handle double click on item
     (Mouse buttons-> 1: left, 2: middle, 3: right, 4-5: wheel)
-
     - if IsPlotable -> Draw
 */
 void Plotter::OnItemDoubleClick(TGFrame* f, Int_t btn)

@@ -1,4 +1,5 @@
-/* plotter : macro.h */
+/** @file macro.h
+*/
 
 #ifndef MACRO_H
 #define MACRO_H
@@ -26,34 +27,34 @@ struct Axis {
 class HistoInfo
 {
  private:
-  Int_t    file;
-  TString  name;
-  TString  title;
-  TString  drawoption;
-  Int_t    rebin;
-  Color_t  colour;
-  Double_t scale_factor;
-  TString  leg_text;
+  Int_t    m_file;
+  TString  m_name;
+  TString  m_title;
+  TString  m_drawoption;
+  Int_t    m_rebin;
+  Color_t  m_colour;
+  Double_t m_scale_factor;
+  TString  m_leg_text;
 
  public:
   HistoInfo(Int_t file, TString name, TString title);
   virtual ~HistoInfo();
 
-  void SetDrawOptions(TString input){ drawoption = input; };
-  void SetRebinNumber(Int_t input){ rebin = input; };
-  void SetScaleFactor(Double_t input){ scale_factor = input; };
-  void SetColour(Color_t input){ colour = input; };
-  void SetLegendText(TString input){ leg_text = input; };
+  void SetDrawOptions(TString input){ m_drawoption = input; };
+  void SetRebinNumber(Int_t input){ m_rebin = input; };
+  void SetScaleFactor(Double_t input){ m_scale_factor = input; };
+  void SetColour(Color_t input){ m_colour = input; };
+  void SetLegendText(TString input){ m_leg_text = input; };
   Bool_t operator= (HistoInfo* other);
 
-  Int_t    File() { return file; };
-  TString  Name() { return name; };
-  TString  DrawOption() { return drawoption; };
-  Color_t  Colour() { return colour; };
-  Int_t    RebinNumber() { return (rebin >1) ? rebin : 0; };
-  Double_t ScaleFactor() { return scale_factor; };
-  TString  MacroName();
-  TString  LegendText(){ return leg_text; };
+  Int_t    GetFile() { return m_file; };
+  TString  GetName() { return m_name; };
+  TString  GetDrawOption() { return drawoption; };
+  Color_t  GetColour() { return colour; };
+  Int_t    GetRebinNumber() { return (rebin >1) ? rebin : 0; };
+  Double_t GetScaleFactor() { return scale_factor; };
+  TString  GetMacroName();
+  TString  GetLegendText(){ return leg_text; };
 
 };
 
