@@ -54,7 +54,7 @@ void Plot::Configure()
 
   //-- Rebin
   if(rebin > 1){
-    for(int k=0; k<m_list.size(); k++){
+    for(unsigned int k=0; k<m_list.size(); k++){
       m_list[k]->Rebin(rebin);
     }
   }
@@ -65,7 +65,7 @@ void Plot::Configure()
   y_min = 1e20;
   y_max = -y_min;
 
-  for(int k=0; k<m_list.size(); k++){
+  for(unsigned int k=0; k<m_list.size(); k++){
     if(m_list[k]->GetMinX() < x_min) x_min = m_list[k]->GetMinX();
     if(m_list[k]->GetMaxX() > x_max) x_max = m_list[k]->GetMaxX();
     if(m_list[k]->GetMinY() < y_min) y_min = m_list[k]->GetMinY();
@@ -84,7 +84,7 @@ void Plot::Configure()
 
   // Check if all the histos are the same histo (but from different files :P)
   bool same_names = true;
-  for(int k=1; k<m_list.size(); k++){
+  for(unsigned int k=1; k<m_list.size(); k++){
     if(m_list[k]->GetName() != m_list[k]->GetName()){
       same_names = false;
       break;
@@ -95,7 +95,7 @@ void Plot::Configure()
   if(m_list.size() == 1 || same_names) m_list[0]->SetTitleX(m_list[0]->GetName());
 
   //-- Configure all objects
-  for(int k=0; k<m_list.size(); k++){
+  for(unsigned int k=0; k<m_list.size(); k++){
 
     m_list[k]->SetStyle();
 
@@ -192,7 +192,7 @@ void Plot::Create()
 void Plot::Draw()
 {
   m_list[0]->Draw(draw_options);
-  for(int i=1; i<m_list.size(); i++){
+  for(unsigned int i=1; i<m_list.size(); i++){
     m_list[i]->Draw(draw_options+"same");
   }
 }

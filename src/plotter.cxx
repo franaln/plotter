@@ -21,7 +21,7 @@
 #include "itemsbox.h"
 #include "obj.h"
 #include "plot.h"
-//#include "macro.h"
+#include "macro.h"
 
 const char* settings_file = ".plotterrc";
 
@@ -132,15 +132,15 @@ Plotter::Plotter(std::vector<TString> filenames, bool merge) :
 Plotter::~Plotter()
 {
   Cleanup();
-  for(int k=0; k<m_plots.size(); k++) delete m_plots[k];
+  for(unsigned int k=0; k<m_plots.size(); k++) delete m_plots[k];
 }
 
 /** Create main window:
     - menu bar
     - main frame (with fileboxes)
     - options frame
-    - colours
-    - cuts
+    - colours frame
+    - cuts entry
 */
 void Plotter::CreateMainWindow()
 {
@@ -156,7 +156,6 @@ void Plotter::CreateMainWindow()
 /** Create menu bar:
     - File: Save all canvases, Exit
     - View : Colours, Cuts
-    - Create:
     - Macro: Begin, Reset, Save ROOT macro, Save python macro
 */
 void Plotter::CreateMenuBar()
@@ -177,12 +176,6 @@ void Plotter::CreateMenuBar()
   menu_view->AddEntry("Cuts", M_VIEW_CUTS);
   menu_view->Associate(this);
 
-  // menu_create = new TGPopupMenu(fClient->GetRoot());
-  // menu_create->AddEntry("Add", M_CREATE_ADD);
-  // menu_create->AddEntry("Substract", M_CREATE_SUBSTRACT);
-  // menu_create->AddEntry("Efficiency", M_CREATE_EFFICIENCY);
-  // menu_create->Associate(this);
-
   menu_macro = new TGPopupMenu(fClient->GetRoot());
   menu_macro->AddEntry("Begin", M_MACRO_BEGIN);
   menu_macro->AddEntry("Reset", M_MACRO_RESET);
@@ -196,7 +189,6 @@ void Plotter::CreateMenuBar()
   menu_bar = new TGMenuBar(this, 1, 1, kHorizontalFrame);
   menu_bar->AddPopup("&File",   menu_file, layout_menu_bar_item);
   menu_bar->AddPopup("&View",   menu_view, layout_menu_bar_item);
-  //menu_bar->AddPopup("&Histos", menu_create, layout_menu_bar_item);
   menu_bar->AddPopup("&Macro",  menu_macro, layout_menu_bar_item);
 
   AddFrame(menu_bar, layout_menu_bar);
@@ -271,8 +263,7 @@ void Plotter::CreateMainFrame()
   frame_main->AddFrame(frame_aux, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX, 2, 2, 2, 2));
 }
 
-/** @fn CreateOptionsFrame
-    @brief creates the frame with all the plot options and the buttons
+/** Creates the frame with all the plot options and buttons
 */
 void Plotter::CreateOptionsFrame()
 {
@@ -377,7 +368,7 @@ void Plotter::CreateOptionsFrame()
   frame_options->AddFrame(group_hist_options, new TGLayoutHints(kLHintsExpandX, 2, 5, 5, 20));
   frame_options->AddFrame(group_hist2D_options, new TGLayoutHints(kLHintsExpandX, 2, 5, 2, 20));
 
-  frame_main->AddFrame(frame_options, new TGLayoutHints(kLHintsNormal, 0, 2, 0, 2)); //Add Options frame to fFrame
+  frame_main->AddFrame(frame_options, new TGLayoutHints(kLHintsNormal, 0, 2, 0, 2));
 }
 
 /** creates the frame to choose the plot colours
@@ -429,30 +420,22 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
     case kCM_MENU:
       switch (parm1) {
       case M_FILE_EXIT:
-        {
-          Exit();
-        }
+        Exit();
         break;
 
       case M_FILE_SAVE_CANVASES:
-        {
-          SavePlots();
-        }
+        SavePlots();
         break;
 
       case M_FILE_SETTINGS:
         break;
 
       case M_VIEW_CUTS:
-        {
-          ShowHideCuts();
-        }
+        ShowHideCuts();
         break;
 
       case M_VIEW_COLOURS:
-        {
-          ShowHideColours();
-        }
+        ShowHideColours();
         break;
 
       case M_MACRO_BEGIN:
@@ -477,15 +460,11 @@ Bool_t Plotter::ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2)
         break;
 
       case M_MACRO_CREATE_ROOT:
-        {
-          //CreateMacro(MRoot);
-        }
+        CreateMacro(MRoot);
         break;
 
       case M_MACRO_CREATE_PYTHON:
-        {
-          //CreateMacro(MPython);
-        }
+        CreateMacro(MPython);
         break;
 
       default:
@@ -606,14 +585,14 @@ void Plotter::SetStyle()
 
 void Plotter::GetColours()
 {
-  for(int k=0; k<m_items.size(); k++){
+  for(unsigned int k=0; k<m_items.size(); k++){
     colours[k] = TColor::GetColor(pcolors[k]);
     if(frame_main->IsVisible(frame_colours))
       colours[k] = TColor::GetColor(colorselect[k]->GetColor());
   }
 }
 
-/**
+/** Clear items selected:
    - clear items_sel
    - clear plot_list
    - set items status to false
@@ -665,6 +644,9 @@ void Plotter::Draw()
   if(check_order->GetState())  sort(m_items.begin(), m_items.end(), SortVs);
 
   Plot *p = new Plot();
+
+  p->SetLogX(check_log_x->GetState());
+  p->SetLogY(check_log_y->GetState());
 
   GetColours();
 
@@ -740,9 +722,6 @@ void Plotter::SavePlots()
 
   return;
 }
-
-/* Macro
-   ----- */
 
 /** End, create and save macro.
     Open a dialog to select the macro name.

@@ -25,6 +25,8 @@ class Plot {
   void Save();
   void Dump();
 
+  void SetLogX(bool set) { do_logx = set; }
+  void SetLogY(bool set) { do_logy = set; }
   void SetIncludeRatio(bool set) { include_ratio = set; }
   void SetIncludeDiff(bool set) { include_diff = set; }
   void SetDrawOptions(TString opts) { draw_options = opts; }
@@ -35,7 +37,7 @@ class Plot {
   void Draw();
   void DrawEfficiency();
   void DrawRatios();
-  //void DrawDiffs();
+  void DrawDiffs();
   void DrawLegend();
 
   TString m_name;

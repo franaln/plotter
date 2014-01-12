@@ -40,8 +40,7 @@ TString Obj::GetName()
 {
   if(m_type == Hist)
     return m_hist->GetName();
-  else
-    m_graph->GetName();
+  return m_graph->GetName();
 }
 
 double Obj::GetMinX()
