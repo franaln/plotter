@@ -697,12 +697,20 @@ void Plotter::Draw()
 
 void Plotter::DrawEfficiency()
 {
-  if(m_items.size() < 2) return;
+  if(m_items.size() != 2) {
+    error("You can only draw the efficiency from two histograms.");
+    return;
+  }
+
 }
 
 void Plotter::DrawRatio()
 {
-  if(m_items.size() < 2) return;
+  if(m_items.size() != 2) {
+    error("You can only draw the ratio from two histograms.");
+    return;
+  }
+
 }
 
 std::vector<int> Plotter::GetNumberOfObjectsInEachFile()

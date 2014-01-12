@@ -6,39 +6,34 @@
 
 #include "obj.h"
 
-Obj::Obj(TH1 *h1, TH1 *h2, std::string operation)
+Obj::Obj(Obj *obj1, Obj *obj2, std::string operation)
 {
   if(operation == "ratio"){
-
-    TH1 *h_ratio = (TH1*)h1->Clone("h_ratio");
-    h_ratio->Divide(h2);
+    TH1 *h_ratio = (TH1*)obj1->GetHist()->Clone("h_ratio");
+    h_ratio->Divide(obj2->GetHist());
 
     m_type = Hist;
     m_hist = h_ratio;
     m_opts = "";
   }
   else if(operation == "difference"){
-    TH1 *h_diff = (TH1*)h1->Clone("h_diff");
-    h_diff->Add(h2, -1.0);
-    h_diff->Divide(h1);
+    TH1 *h_diff = (TH1*)obj1->GetHist()->Clone("h_diff");
+    h_diff->Add(obj2->GetHist(), -1.0);
+    h_diff->Divide(obj1->GetHist());
 
     m_type = Hist;
     m_hist = h_diff;
     m_opts = "";
   }
   else if(operation == "efficiency"){
-    //h_numerator   = (TH1*) plot_list->At(1)->Clone("h_numerator");
-  // h_denominator = (TH1*) plot_list->At(0)->Clone("h_denominator");
+    TGraphAsymmErrors *gr = new TGraphAsymmErrors();
 
-     TGraphAsymmErrors *gr = new TGraphAsymmErrors();
+    gr->Divide(obj2->GetHist(), obj1->GetHist(), "cl=0.683 b(0.5,0.5) mode");
 
-     gr->Divide(h2, h1, "cl=0.683 b(0.5,0.5) mode");
-
-     m_type = Graph;
-     m_graph = gr;
-     m_opts = "";
+    m_type = Graph;
+    m_graph = gr;
+    m_opts = "";
   }
-
 }
 
 TString Obj::GetName()
@@ -120,7 +115,7 @@ void Obj::SetStyle()
 
 }
 
-void Obj::SetColour(Color_t colour, bool fill)
+void Obj::SetColor(Color_t colour, bool fill)
 {
   if(m_type == Hist) {
     m_hist->SetLineColor(colour);

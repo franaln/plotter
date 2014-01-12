@@ -28,7 +28,7 @@ class Obj {
  public:
   Obj(TH1 *obj) : m_type(Hist), m_hist(obj), m_opts("") { }
   Obj(TGraph *obj) : m_type(Graph), m_graph(obj), m_opts("") { }
-  Obj(TH1*, TH1*, std::string);
+  Obj(Obj*, Obj*, std::string);
 
   ~Obj() { delete m_hist; delete m_graph; }
 
@@ -37,6 +37,9 @@ class Obj {
   double Integral();
 
   // getters
+  TH1* GetHist() { return m_hist; }
+  TGraph* GetGraph() { return m_graph; }
+
   TString GetName();
   double GetMinX();
   double GetMaxX();
@@ -49,7 +52,7 @@ class Obj {
   void SetRangeX(double, double);
   void SetRangeY(double, double);
   void SetStats(bool stat) { if(m_type == Hist) m_hist->SetStats(stat); }
-  void SetColour(Color_t, bool);
+  void SetColor(Color_t, bool=false);
   void SetStyle();
 
   void Draw(TString options="");

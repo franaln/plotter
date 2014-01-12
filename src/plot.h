@@ -33,7 +33,8 @@ class Plot {
  private:
   void Configure();
   void Draw();
-  //void DrawRatios();
+  void DrawEfficiency();
+  void DrawRatios();
   //void DrawDiffs();
   void CreateLegend();
 

@@ -34,7 +34,7 @@ Plot::~Plot()
 
 void Plot::Add(Obj *obj, Color_t colour, bool fill)
 {
-  obj->SetColour(colour, fill);
+  obj->SetColor(colour, fill);
   m_list.push_back(obj);
 }
 
@@ -197,41 +197,40 @@ void Plot::Draw()
   }
 }
 
-// void Plot::DrawRatios()
-// {
-//   int n_ratios = m_list.size() - 1;
+void Plot::DrawRatios()
+{
+  int n_ratios = m_list.size() - 1;
 
-//   if(n_ratios==0) return;
+  if(n_ratios == 0) return;
 
-//   TH1 *ratio[n_ratios];
-//   for(int k=0; k< n_ratios; k++){
-//     ratio[k] = CreateRatio(k+1, 0);
-//   }
+  Obj *ratio[n_ratios];
+  for(int k=0; k< n_ratios; k++){
+    ratio[k] = new Obj(m_list[k+1], m_list[0], "ratio");
+  }
 
-//   if(!ratio[0]) {
-//     error("There are no ratios to plot.");
-//     return;
-//   }
+  if(!ratio[0]) {
+    error("There are no ratios to plot.");
+    return;
+  }
 
-//   ratio[0]->GetYaxis()->SetTitle("Ratio");
-//   ratio[0]->SetStats(0);
-//   ratio[0]->GetXaxis()->SetRangeUser(x_min,x_max);
-//   ratio[0]->GetYaxis()->CenterTitle();
-//   ratio[0]->GetXaxis()->SetTitleSize( 0.08 );
-//   ratio[0]->GetXaxis()->SetLabelSize( 0.08 );
-//   ratio[0]->GetYaxis()->SetLabelSize( 0.08 );
-//   ratio[0]->GetYaxis()->SetTitleSize( 0.08 );
-//   ratio[0]->GetYaxis()->SetTitleOffset( 0.4 );
-//   ratio[0]->GetXaxis()->SetTitleOffset( 1.1 );
+  ratio[0]->SetTitleY("Ratio");
+  // ratio[0]->SetStats(0);
+  // ratio[0]->GetXaxis()->SetRangeUser(x_min,x_max);
+  // ratio[0]->GetYaxis()->CenterTitle();
+  // ratio[0]->GetXaxis()->SetTitleSize( 0.08 );
+  // ratio[0]->GetXaxis()->SetLabelSize( 0.08 );
+  // ratio[0]->GetYaxis()->SetLabelSize( 0.08 );
+  // ratio[0]->GetYaxis()->SetTitleSize( 0.08 );
+  // ratio[0]->GetYaxis()->SetTitleOffset( 0.4 );
+  // ratio[0]->GetXaxis()->SetTitleOffset( 1.1 );
 
-//   for(int n=0; n<n_ratios; n++){
-//     //ratio[n]->SetMarkerColor(m_colours[n+1]);
-//     //ratio[n]->SetLineColor(m_colours[n+1]);
+  for(int n=0; n<n_ratios; n++){
+    //    ratio[n]->SetColor(m_colours[n+1]);
 
-//     if(n==0) ratio[n]->Draw();
-//     else ratio[n]->Draw("same");
-//   }
-// }
+    if(n==0) ratio[n]->Draw();
+    else ratio[n]->Draw("same");
+  }
+}
 
 /* Draw the relative differences of the selected histograms with respect the first one.
    diff = (hN - h1)/h1 */
@@ -353,26 +352,19 @@ void Plot::CreateLegend()
 //   return;
 }
 
-// bool Plotter::PlotEfficiency()
-// {
-//   // TGraphAsymmErrors *gr = CreateEfficiency();
-//   // if(!gr) { error("No se pudo crear el TGraphAsymmErrors."); return false; }
+void Plot::DrawEfficiency()
+{
 
-//   // gr->GetXaxis()->SetTitle("");
-//   // gr->GetYaxis()->SetTitle("Efficiency");
+  Obj *eff = new Obj(m_list[0], m_list[1], "efficiency");
 
-//   // GetColours();
+  eff->SetTitleX("");
+  eff->SetTitleY("Efficiency");
 
-//   // gr->SetMarkerColor(colours[0]);
-//   // gr->SetLineColor(colours[0]);
-//   // gr->SetMarkerStyle(marker_style);
-//   // gr->SetMarkerSize(marker_size);
-//   // gr->SetLineWidth(line_width);
+  eff->SetColor(1, false);
+  eff->SetStyle();
 
-//   // gr->Draw("PAZT");
-
-//   return true;
-// }
+  // gr->Draw("PAZT");
+}
 
 // bool Plotter::PlotRatios(bool down)
 // {
@@ -459,10 +451,6 @@ void Plot::CreateLegend()
  */
 // TGraphAsymmErrors* Plotter::CreateEfficiency()
 // {
-//   if(m_items.size() != 2) {
-//     error("Solo funciona si seleccionas dos histogramas.");
-//     return 0;
-//   }
 
   // if(!plot_list->At(0)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(1)->IsA()->InheritsFrom(TH1::Class())) {
   //   error("Solo funciona si seleccionas dos histogramas.");
@@ -481,12 +469,8 @@ void Plot::CreateLegend()
   // return gr;
 //}
 
-// TH1* Plot::CreateRatio(int index_first, int index_last)
+//TH1* Plot::CreateRatio(int index_first, int index_last)
 // {
-//   if(m_list.size()!=2) {
-//     error("Solo funciona con dos histogramas.");
-//     return 0;
-//   }
 
 //   if(!m_list[index_first]->IsA()->InheritsFrom(TH1::Class()) || !m_list[index_last]->IsA()->InheritsFrom(TH1::Class())) {
 //     error("Solo funciona si seleccionas dos histogramas.");
