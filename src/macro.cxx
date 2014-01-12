@@ -17,13 +17,13 @@ HistoInfo::HistoInfo(Int_t file, TString name, TString title) :
 
 TString HistoInfo::GetMacroName()
 {
-  TString macroname = Form("h_file%i_%s", file, name.Data());
+  TString macroname = Form("h_file%i_%s", m_file, m_name.Data());
   return macroname;
 }
 
 Bool_t HistoInfo::operator= (HistoInfo* other)
 {
-  if( m_file == other->GetFile && m_name == other->GetName())
+  if( m_file == other->GetFile() && m_name == other->GetName())
     return true;
   return false;
 }
@@ -51,7 +51,7 @@ void Macro::AddHisto(HistoInfo* h)
   m_canvases[canvas_counter]->AddHisto(h);
 }
 
-void Macro::AddLegend(vector<TString> legend)
+void Macro::AddLegend(std::vector<TString> legend)
 {
   for(int index=0; index<m_canvases[canvas_counter]->GetNumberOfHistos(); index++){
     m_canvases[canvas_counter]->GetHisto(index)->SetLegendText(legend[index]);

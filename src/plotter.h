@@ -180,7 +180,7 @@ class Plotter : public TGMainFrame {
   short marker_style;
   float marker_size;
   short line_width;
-  //  Macro *macro;
+  Macro *macro;
   TChain *merge_chain;
 
   Bool_t m_merge_mode;

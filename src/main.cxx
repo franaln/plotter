@@ -58,7 +58,9 @@ int main(int argc, char **argv)
   // Application
   TApplication *rootApp = new TApplication("Plotter", &argc, argv);
 
-  std::cout << NAME << " " << VERSION << std::endl;
+  std::cout << " -----------" << std::endl;
+  std::cout << "   " << NAME << std::endl;
+  std::cout << " -----------" << std::endl;
 
   Plotter p(files, merge);
 

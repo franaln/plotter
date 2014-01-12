@@ -21,7 +21,6 @@
 #include "itemsbox.h"
 #include "obj.h"
 #include "plot.h"
-#include "macro.h"
 
 const char* settings_file = ".plotterrc";
 
@@ -728,17 +727,14 @@ void Plotter::SavePlots()
 */
 void Plotter::CreateMacro(OutputFormat type)
 {
-  // static TString dir(".");
-  // TGFileInfo fi;
-  // fi.fIniDir    = StrDup(dir);
-  // new TGFileDialog(fClient->GetRoot(), this, kFDSave, &fi);
-  // if(fi.fFilename) {
-
-  //   macro->SaveMacro(fi.fFilename, type);
-
-  //   msg("The macro " << fi.fFilename << " has been created. ");
-  // }
-
+  static TString dir(".");
+  TGFileInfo fi;
+  fi.fIniDir    = StrDup(dir);
+  new TGFileDialog(fClient->GetRoot(), this, kFDSave, &fi);
+  if(fi.fFilename) {
+    macro->SaveMacro(fi.fFilename, type);
+    msg("The macro " << fi.fFilename << " has been created. ");
+  }
 }
 
 

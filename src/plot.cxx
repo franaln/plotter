@@ -152,7 +152,7 @@ void Plot::Create()
     Draw();
 
     down->cd();
-    //DrawRatios();
+    DrawRatios();
   }
   else if(include_diff){
     TPad *up   = new TPad("upperPad", "upperPad", .001, .29, .999, .999);
@@ -178,7 +178,7 @@ void Plot::Create()
     Draw();
 
     down->cd();
-    //DrawDiffs();
+    DrawDiffs();
   }
   else {
     if(do_logx) m_canvas->SetLogx();
@@ -234,42 +234,40 @@ void Plot::DrawRatios()
 
 /* Draw the relative differences of the selected histograms with respect the first one.
    diff = (hN - h1)/h1 */
-// void Plot::DrawDiffs()
-// {
-//   int n_diffs = m_list.size() - 1;
+void Plot::DrawDiffs()
+{
+  int n_diffs = m_list.size() - 1;
 
-//   if(n_diffs==0) return;
+  if(n_diffs==0) return;
 
-//   TH1 *diff[n_diffs];
-//   for(int k=0; k<n_diffs; k++){
-//     diff[k] = CreateRelativeDiff(k+1, 0);
-//   }
+  Obj *diff[n_diffs];
+  for(int k=0; k<n_diffs; k++){
+    diff[k] = new Obj(m_list[k+1], m_list[0], "difference");
+  }
 
-//   if(!diff[0]) {
-//     error("There are no differences to plot.");
-//     return;
-//   }
+  if(!diff[0]) {
+    error("There are no differences to plot.");
+    return;
+  }
 
-//   diff[0]->GetYaxis()->SetTitle("Relative difference");
-//   diff[0]->SetStats(0);
-//   diff[0]->GetXaxis()->SetRangeUser(x_min,x_max);
-//   diff[0]->GetYaxis()->CenterTitle();
-//   diff[0]->GetXaxis()->SetTitleSize( 0.08 );
-//   diff[0]->GetXaxis()->SetLabelSize( 0.08 );
-//   diff[0]->GetYaxis()->SetLabelSize( 0.08 );
-//   diff[0]->GetYaxis()->SetTitleSize( 0.08 );
-//   diff[0]->GetYaxis()->SetTitleOffset( 0.4 );
-//   diff[0]->GetXaxis()->SetTitleOffset( 1.1 );
+  diff[0]->SetTitleY("Relative difference");
+  diff[0]->SetStats(0);
+  diff[0]->SetRangeX(x_min, x_max);
+  //   diff[0]->GetYaxis()->CenterTitle();
+  //   diff[0]->GetXaxis()->SetTitleSize( 0.08 );
+  //   diff[0]->GetXaxis()->SetLabelSize( 0.08 );
+  //   diff[0]->GetYaxis()->SetLabelSize( 0.08 );
+  //   diff[0]->GetYaxis()->SetTitleSize( 0.08 );
+  //   diff[0]->GetYaxis()->SetTitleOffset( 0.4 );
+  //   diff[0]->GetXaxis()->SetTitleOffset( 1.1 );
 
-//   // GetColours();
-//   for(int n=0; n<n_diffs; n++){
-//     //diff[n]->SetMarkerColor(colours[n+1]);
-//     //diff[n]->SetLineColor(colours[n+1]);
+  for(int n=0; n<n_diffs; n++){
+    //diff[n]->SetColor(m_colours[n+1]);
 
-//     if(n==0) diff[n]->Draw();
-//     else diff[n]->Draw("same");
-//   }
-// }
+    if(n==0) diff[n]->Draw();
+    else diff[n]->Draw("same");
+  }
+}
 
 void Plot::DrawLegend()
 {
@@ -339,17 +337,6 @@ void Plot::DrawLegend()
   //   leg->AddEntry(plot_list->At(k), legend[k]);
   // }
   // leg->Draw();
-
-
-  // if(m_macroRecording){
-  //   macro->add_legend(legend);
-  // }
-
-  //   lnk = (TObjOptLink*)lnk->Next();
-  //   k++;
-
-
-//   return;
 }
 
 void Plot::DrawEfficiency()

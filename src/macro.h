@@ -65,8 +65,7 @@ class CanvasInfo {
   std::vector<HistoInfo*> m_histos;
 
  public:
-  CanvasInfo(TString name) : m_name(name) {};
-  virtual ~CanvasInfo();
+ CanvasInfo(TString name) : m_name(name) {};
 
   TString GetName() { return m_name; };
   std::vector<HistoInfo*> GetHistos(){ return m_histos; };

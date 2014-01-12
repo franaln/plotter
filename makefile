@@ -9,7 +9,7 @@ ROOTFLAGS := $(shell root-config --cflags)
 OBJDIR    := obj
 SRCDIR    := src
 
-_OBJ      := main.o plotter.o item.o itemsbox.o plot.o obj.o Dic.o
+_OBJ      := main.o plotter.o item.o itemsbox.o plot.o obj.o macro.o Dic.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 _HEADER   := plotter.h itemsbox.h
