@@ -132,6 +132,7 @@ Plotter::Plotter(std::vector<TString> filenames, bool merge) :
 Plotter::~Plotter()
 {
   Cleanup();
+  for(int k=0; k<m_plots.size(); k++) delete m_plots[k];
 }
 
 /** Create main window:
@@ -660,6 +661,9 @@ void Plotter::Draw()
 {
   if(m_items.size()==0) return;
 
+  // Plot order: 1) Selected order (default). 2) Order by file and entry.
+  if(check_order->GetState())  sort(m_items.begin(), m_items.end(), SortVs);
+
   Plot *p = new Plot();
 
   GetColours();
@@ -685,8 +689,6 @@ void Plotter::Draw()
 
   p->SetDrawOptions(draw_opts);
 
-  // // Plot order: 1) Selected order (default). 2) Order by file and entry.
-  // if(check_order->GetState())  sort(m_items.begin(), m_items.end(), SortVs);
 
   p->Create();
 
@@ -742,10 +744,11 @@ void Plotter::SavePlots()
 /* Macro
    ----- */
 
-/** End/Create/Save macro. Open a dialog to select the macro name.
+/** End, create and save macro.
+    Open a dialog to select the macro name.
 */
-//void Plotter::CreateMacro(OutputFormat type)
-//{
+void Plotter::CreateMacro(OutputFormat type)
+{
   // static TString dir(".");
   // TGFileInfo fi;
   // fi.fIniDir    = StrDup(dir);
@@ -757,16 +760,12 @@ void Plotter::SavePlots()
   //   msg("The macro " << fi.fFilename << " has been created. ");
   // }
 
-  // return;
-//}
+}
 
 
-
-/* Settings
-   --------*/
-
-/** Load configuration values from .plotterrc if exists, or the default values
- */
+/** Load configuration values
+    Use .plotterrc if exists, or default values otherwise
+*/
 void Plotter::LoadSettings()
 {
   TEnv env(settings_file);

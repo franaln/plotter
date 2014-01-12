@@ -15,13 +15,16 @@ Plot::Plot()
   m_name = Form("plot_%i", number_of_plot);
   m_canvas = new TCanvas(m_name, m_name, 800, 600);
 
-  include_ratio = false;
-  include_diff = false;
   rebin = 0;
   draw_options = "";
+
+  show_stats = false;
+  include_ratio = false;
+  include_diff = false;
+  do_logx = false;
+  do_logy = false;
   do_normalise = false;
   do_normalise_to_first = false;
-  show_stats = false;
 
   number_of_plot++;
 }
@@ -40,13 +43,10 @@ void Plot::Add(Obj *obj, Color_t colour, bool fill)
 
 void Plot::Save()
 {
-  //TCanvas *old = (TCanvas*)gROOT->GetListOfCanvases()->FindObject(m_name);
-  //if (!old || !old->IsOnHeap())
-  //return;
   if(!m_canvas || !m_canvas->IsOnHeap())
     return;
 
-  m_canvas->Print(m_name);
+  m_canvas->Print(m_name+".eps");
 }
 
 void Plot::Configure()
@@ -271,16 +271,16 @@ void Plot::DrawRatios()
 //   }
 // }
 
-void Plot::CreateLegend()
+void Plot::DrawLegend()
 {
-  // vector<TString> legend;
+  std::vector<TString> legend;
 
-  // if( items_sel.size()==1 ){ //1 solo histo de 1 solo file, return sin legend
-  //   return;
-  // }
+  if(m_list.size() == 1){ //1 solo histo de 1 solo file, return sin legend
+    return;
+  }
 
-  // // Legend config
-  // vector<int> hsv = get_number_of_objects_in_each_file();
+  // Legend config
+  //vector<int> hsv = get_number_of_objects_in_each_file();
 
   // bool mtitle=false; bool mfile=false; bool mtitlefile=false;
   // if( hsv[0]==1 && hsv[1]==1 ){ //1 solo histo de >1 files
@@ -354,7 +354,6 @@ void Plot::CreateLegend()
 
 void Plot::DrawEfficiency()
 {
-
   Obj *eff = new Obj(m_list[0], m_list[1], "efficiency");
 
   eff->SetTitleX("");
@@ -365,156 +364,6 @@ void Plot::DrawEfficiency()
 
   // gr->Draw("PAZT");
 }
-
-// bool Plotter::PlotRatios(bool down)
-// {
-// }
-
-// void Plotter::PlotLegend()
-// {
-  // vector<TString> legend;
-
-  // if( items_sel.size()==1 ){ //1 solo histo de 1 solo file, return sin legend
-  //   return;
-  // }
-
-  // // Legend config
-  // vector<int> hsv = GetNumberOfObjectsInEachFile();
-
-  // bool mtitle=false; bool mfile=false; bool mtitlefile=false;
-  // if( hsv[0]==1 && hsv[1]==1 ){ //1 solo histo de >1 files
-  //   mfile=true;
-  // }
-  // else if(hsv[0] && !hsv[1]){ // >1 histo de 1 solo file
-  //   mtitle=true;
-  // }
-  // else if(hsv[0] && hsv[1] ){ // >1 histo de >1 file
-  //   mtitlefile=true;
-  // }
-
-  // vector<TString> legtemp;
-  // for(unsigned int k=0; k<items_sel.size(); k++){
-
-  //     TString tmp = "";
-  //     if(mfile){
-  //       tmp = boxes[items_sel[k]->GetFile()]->GetHeaderText();
-  //     }
-  //     else if(mtitle){
-  //       items_sel[k]->GetLegendText();
-  //     }
-  //     else if(mtitlefile){
-  //       tmp = " (" + boxes[items_sel[k]->GetFile()]->GetHeaderText() + ")";
-  //       tmp=items_sel[k]->GetLegendText()+tmp;
-  //     }
-  //     legend.push_back(tmp);
-  //     legtemp.push_back(tmp);
-  // }
-
-  // // if(type==Plot::Ratio){
-  // //   for(unsigned int i=1;i<legend.size();i++){
-  // //     legend[i] += "/";
-  // //     legend[i] += legend[0];
-  // //   }
-  // // }
-
-  // // legend size
-  // sort(legtemp.begin(), legtemp.end());
-  // reverse(legtemp.begin(),legtemp.end());
-
-  // Double_t maxwidth = legtemp[0].Sizeof() * 0.01;
-  // Double_t maxheight = items_sel.size() * 0.035;
-
-  // Double_t xmin, xmax, ymin, ymax;
-
-  // xmax = 0.86; ymax = 0.86;
-  // ymin = (ymax - maxheight)>0.2 ? ymax - maxheight : 0.2;
-  // xmin = (xmax - maxwidth)>0.2  ? xmax - maxwidth  : 0.2;
-
-  // // Create and plot legend
-  // TLegend *leg = new TLegend(xmin, ymin, xmax, ymax);
-  // leg->SetFillColor(0);
-  // unsigned int begin = type!=Plot::Normal ? 1 : 0;
-  // for(unsigned int k=begin; k<items_sel.size(); k++){
-  //   leg->AddEntry(plot_list->At(k), legend[k]);
-  // }
-  // leg->Draw();
-
-
-  //if(_macroRecording){
-    //macro->AddLegend(legend);
-  //}
-
-//   return;
-// }
-
-/** Create efficiency if there are two selected histos.
- */
-// TGraphAsymmErrors* Plotter::CreateEfficiency()
-// {
-
-  // if(!plot_list->At(0)->IsA()->InheritsFrom(TH1::Class()) || !plot_list->At(1)->IsA()->InheritsFrom(TH1::Class())) {
-  //   error("Solo funciona si seleccionas dos histogramas.");
-  //   return 0;
-  // }
-
-  // TH1 *h_numerator, *h_denominator;
-
-  // h_numerator   = (TH1*) plot_list->At(1)->Clone("h_numerator");
-  // h_denominator = (TH1*) plot_list->At(0)->Clone("h_denominator");
-
-  // TGraphAsymmErrors *gr = new TGraphAsymmErrors();
-
-  // gr->Divide(h_numerator, h_denominator, "cl=0.683 b(0.5,0.5) mode");
-
-  // return gr;
-//}
-
-//TH1* Plot::CreateRatio(int index_first, int index_last)
-// {
-
-//   if(!m_list[index_first]->IsA()->InheritsFrom(TH1::Class()) || !m_list[index_last]->IsA()->InheritsFrom(TH1::Class())) {
-//     error("Solo funciona si seleccionas dos histogramas.");
-//     return 0;
-//   }
-
-//   TH1 *h_numerator, *h_denominator;
-//   h_numerator   = m_list[index_first]->Copy("h_numerator");
-//   h_denominator = m_list[index_last]->Copy("h_denominator");
-
-//   TH1 *ratio = h_numerator->Copy("ratio");
-
-//   ratio->Divide(h_denominator);
-
-//   return ratio;
-// }
-
-/** Compute the relative difference between two histograms
-    diff = (h2 - h1)/h1
-*/
-// TH1* Plot::CreateRelativeDiff(int index_first, int index_last)
-// {
-//   if(m_list->size() != 2) {
-//     error("Solo con dos histogramas.");
-//     return 0;
-//   }
-
-//   // if(!m_list[index_first]->IsA()->InheritsFrom(TH1::Class()) || !m_list[index_last]->IsA()->InheritsFrom(TH1::Class())) {
-//   //   error("Solo funciona con dos histogramas.");
-//   //   return 0;
-//   // }
-
-//   TH1 *h_first, *h_last;
-
-//   h_first = (TH1*)m_list[index_first]->Copy("h_first");
-//   h_last  = (TH1*)m_list[index_last]->Copy("h_last");
-
-//   TH1 *diff = (TH1*)h_first->Clone("diff");
-
-//   diff->Add(h_last, -1.0)  ;
-//   diff->Divide(h_first);
-
-//   return diff;
-//}
 
 void Plot::Dump()
 {

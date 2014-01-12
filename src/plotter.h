@@ -43,7 +43,7 @@
 
 //plotter
 #include "common.h"
-//#include "macro.h"
+#include "macro.h"
 
 class Item;
 class ItemsBox;
@@ -157,9 +157,6 @@ class Plotter : public TGMainFrame {
   inline void CloseWindow() { gApplication->Terminate(0); }
   void LoadSettings();
   //void SaveSettings();
-  //TGraphAsymmErrors* CreateEfficiency();
-  //TH1* CreateRatio(int index_first=1, int index_last=0, bool down=false);
-  //TH1* CreateRelativeDiff(int index_first=1, int index_last=0, bool down=false);
   void GetColours();
   Color_t ConvertStringToColour(const char *c);
   void SetStyle();
@@ -167,12 +164,8 @@ class Plotter : public TGMainFrame {
   void Draw();
   void DrawEfficiency();
   void DrawRatio();
-  //bool PlotRatios(bool down=false);
-  //bool PlotRelativeDiffs(bool down=false);
-  //bool PlotEfficiency();
-  //void PlotLegend();
   std::vector<int> GetNumberOfObjectsInEachFile();
-  //void CreateMacro(OutputFormat);
+  void CreateMacro(OutputFormat);
 
   Obj* GetObject(Item* it);
 

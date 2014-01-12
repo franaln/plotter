@@ -36,7 +36,7 @@ class Plot {
   void DrawEfficiency();
   void DrawRatios();
   //void DrawDiffs();
-  void CreateLegend();
+  void DrawLegend();
 
   TString m_name;
   TCanvas *m_canvas;

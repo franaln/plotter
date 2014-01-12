@@ -38,7 +38,6 @@ class HistoInfo
 
  public:
   HistoInfo(Int_t file, TString name, TString title);
-  virtual ~HistoInfo();
 
   void SetDrawOptions(TString input){ m_drawoption = input; };
   void SetRebinNumber(Int_t input){ m_rebin = input; };
@@ -49,33 +48,30 @@ class HistoInfo
 
   Int_t    GetFile() { return m_file; };
   TString  GetName() { return m_name; };
-  TString  GetDrawOption() { return drawoption; };
-  Color_t  GetColour() { return colour; };
-  Int_t    GetRebinNumber() { return (rebin >1) ? rebin : 0; };
-  Double_t GetScaleFactor() { return scale_factor; };
+  TString  GetDrawOption() { return m_drawoption; };
+  Color_t  GetColour() { return m_colour; };
+  Int_t    GetRebinNumber() { return (m_rebin >1) ? m_rebin : 0; };
+  Double_t GetScaleFactor() { return m_scale_factor; };
   TString  GetMacroName();
-  TString  GetLegendText(){ return leg_text; };
+  TString  GetLegendText(){ return m_leg_text; };
 
 };
 
-class CanvasInfo
-{
+class CanvasInfo {
 
  private:
-
-  TString name;
-  Axis xaxis, yaxis;
-  std::vector<HistoInfo*> histos;
+  TString m_name;
+  Axis m_xaxis, m_yaxis;
+  std::vector<HistoInfo*> m_histos;
 
  public:
-
-  CanvasInfo(TString _name);
+  CanvasInfo(TString name) : m_name(name) {};
   virtual ~CanvasInfo();
 
-  TString         Name(){ return name; };
-  std::vector<HistoInfo*> Histos(){ return histos; };
-  HistoInfo*         Histo(int index){ return histos[index]; };
-  Int_t              NumberOfHistos(){ return histos.size(); };
+  TString GetName() { return m_name; };
+  std::vector<HistoInfo*> GetHistos(){ return m_histos; };
+  HistoInfo* GetHisto(int index){ return m_histos[index]; };
+  Int_t GetNumberOfHistos(){ return m_histos.size(); };
 
   void AddHisto(HistoInfo* histo);
   void AddLegend(std::vector<TString>);
@@ -87,16 +83,16 @@ class Macro
 {
 
  private:
-  TString name;
-  std::vector<TString>      files;
-  std::vector<CanvasInfo*>  canvases;
+  TString m_name;
+  std::vector<TString> m_files;
+  std::vector<CanvasInfo*>  m_canvases;
   Int_t canvas_counter;
 
  public:
-  Macro(TString _name);
+  Macro(TString name) : m_name(name) {};
   virtual ~Macro();
 
-  void   AddFile(TString _file);
+  void   AddFile(TString);
   void   AddCanvas(TString);
   void   AddHisto(HistoInfo *h);
   void   AddLegend(std::vector<TString>);
