@@ -1,5 +1,4 @@
-/** @file item.cxx
-*/
+/** @file item.cxx */
 
 #include "item.h"
 
@@ -19,38 +18,32 @@ Item::Item(Int_t file, Int_t entry, TString name, TString title, ItemType type) 
 
 }
 
-Item::~Item()
+TString Item::GetIcon()
 {
-
-}
-
-const TGPicture* Item::GetIcon()
-{
-  const TGPicture *iconpic;
-
+  TString iconpic;
   if(m_type == Hist1D){
-    iconpic = gClient->GetPicture("h1_t.xpm");
+    iconpic = "h1_t.xpm";
   }
   else if(m_type == Hist2D){
-    iconpic = gClient->GetPicture("h2_t.xpm");
+    iconpic = "h2_t.xpm";
   }
   else if(m_type == Hist3D){
-    iconpic = gClient->GetPicture("h3_t.xpm");
+    iconpic = "h3_t.xpm";
   }
   else if(m_type == Graph){
-    iconpic = gClient->GetPicture("graph.xpm");
+    iconpic = "graph.xpm";
   }
   else if(m_type == Branch){
-    iconpic = gClient->GetPicture("leaf_t.xpm");
+    iconpic = "leaf_t.xpm";
   }
   else if(m_type == Dir){
-    iconpic = gClient->GetPicture("folder_t.xpm");
+    iconpic = "folder_t.xpm";
   }
   else if(m_type == Tree){
-    iconpic = gClient->GetPicture("tree_t.xpm");
+    iconpic = "tree_t.xpm";
   }
   else if(m_type == Back){
-    iconpic = gClient->GetPicture("folder_t.xpm");
+    iconpic = "folder_t.xpm";
   }
 
   return iconpic;

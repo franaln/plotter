@@ -246,8 +246,7 @@ void Plotter::CreateMainFrame()
     else if(i>=n_cols && i<2*n_cols) row = 1;
     else row = 2;
 
-    boxes[i] = new ItemsBox(frame_row[row], w, h, i);
-    boxes[i]->AddFile(m_file_names[i]);
+    boxes[i] = new ItemsBox(frame_row[row], w, h, i, m_file_names[i]);
 
     boxes[i]->GetContent()->Connect("Selected(Int_t)", "Plotter", this, "OnItemClick(Int_t)");
     boxes[i]->GetContent()->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "Plotter", this, "OnItemDoubleClick(TGFrame*, Int_t)");

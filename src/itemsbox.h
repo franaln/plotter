@@ -1,4 +1,4 @@
-/** @file filebox.h
+/** @file itemsbox.h
 */
 
 #ifndef ITEMSBOX_H
@@ -22,17 +22,15 @@
 class ItemsBox  : public TGVerticalFrame {
 
 public:
-  ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t _ncolumn);
-  virtual ~ItemsBox();
+  ItemsBox(TGWindow *main, UInt_t, UInt_t, Int_t, TString);
+  ~ItemsBox();
 
-
-  void AddFile(TString);
-  Item* GetItem(int entry) { return items[entry]; };
-  TString GetHeaderText() { return header->GetText(); };
-  TGListBox* GetContent() { return content; };
-  TFile* GetFile() { return file; };
-  TDirectory* GetCurrentDir()  { return file->GetDirectory(current_path); };
-  TTree* GetCurrentTree() {  return (TTree*)file->Get(current_path); };
+  Item* GetItem(int entry) { return m_items[entry]; };
+  TString GetHeaderText() { return m_header->GetText(); };
+  TGListBox* GetContent() { return m_content; };
+  TFile* GetFile() { return m_file; };
+  TDirectory* GetCurrentDir()  { return m_file->GetDirectory(current_path); };
+  TTree* GetCurrentTree() {  return (TTree*)m_file->Get(current_path); };
 
   void Clear();
 
@@ -46,20 +44,20 @@ public:
 
   void BrowseItems(TString fname="");
   void BrowseTree(TString name);
-  void GoBack();
+  void GoBack() { BrowseItems(last_path); }
   void ShowItems();
   TString GetFilenameFromPath(TString);
 
-  Int_t n;
-  std::vector<TString> filenames;
-  TFile *file;
-  std::vector<Item*> items;
+  Int_t m_column;;
+
+  TFile *m_file;
+  std::vector<Item*> m_items;
 
   TString last_path, current_path;
 
   //gui
-  TGTextEntry *header;
-  TGListBox *content;
+  TGTextEntry *m_header;
+  TGListBox   *m_content;
 
   ClassDef(ItemsBox, 0);
 };

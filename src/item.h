@@ -1,4 +1,4 @@
-/* plotter : item.h */
+/** @file item.h */
 
 #ifndef ITEM_H
 #define ITEM_H
@@ -8,8 +8,6 @@
 #include <iostream>
 #include <TString.h>
 #include <cmath>
-#include <TGPicture.h>
-#include <TGResourcePool.h>
 
 #include "common.h"
 
@@ -40,7 +38,6 @@ class Item {
 
  public:
   Item(Int_t file, Int_t entry, TString name, TString title, ItemType type);
-  virtual ~Item();
 
   TString GetName() { return m_name; }
   TString GetTitle() { return m_title; }
@@ -51,7 +48,7 @@ class Item {
   Int_t GetId() { return m_id; }
   Int_t GetFile() { return m_file; };
   Int_t GetEntry(){ return m_entry; };
-  const TGPicture* GetIcon();
+  TString GetIcon();
 
   bool IsDir() { return m_type == Dir ? true : false; }
   bool IsTree() { return m_type == Tree ? true : false; }
