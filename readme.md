@@ -8,11 +8,11 @@ Plotter
 
 ## Install
 
-```make``` (and add bin/plotter to the PATH)
+```make``` (and add plotter to the PATH)
 
 or
 
-```make && make install``` (this will put the plotter binary in the usual place: /usr/bin)
+```make && make install``` (this will install plotter in the usual place: /usr/bin)
 
 
 ## Bash completion
