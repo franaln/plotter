@@ -6,21 +6,11 @@
 
 #include <iostream>
 
-// colors
-#define GRAY    "\033[90m"
-#define RED     "\033[91m"
-#define GREEN   "\033[92m"
-#define YELLOW  "\033[93m"
-#define BLUE    "\033[94m"
-#define PURPLE  "\033[95m"
-#define AQUA    "\033[96m"
-#define ORANGE  "\033[33m"
-#define ENDC    "\033[0m"
-
 // output messages
 #define msg(x)  std::cout << "-- " << x << std::endl;
-#define error(x) std::cout << RED << "error! " << ENDC << x << std::endl;
+#define error(x) std::cout << "\033[91merror!\033[0m " << x << std::endl;
 
+// id <-> (file, entry)
 inline Int_t id_to_entry(int id) { return id-((id/100000)*100000); }
 inline Int_t id_to_file(int id)  { return id/100000-1; }
 
