@@ -1,5 +1,4 @@
-/** @file plotter.h
-*/
+/** @file plotter.h */
 
 #ifndef PLOTTER_H
 #define PLOTTER_H
@@ -46,7 +45,7 @@
 #include "macro.h"
 
 class Item;
-class ItemsBox;
+class FileBox;
 class Obj;
 class Plot;
 
@@ -130,7 +129,7 @@ class Plotter : public TGMainFrame {
   TGPopupMenu *menu_view;
   TGColorSelect *colorselect[20];
   TGCheckButton *check_fill[20];
-  ItemsBox *boxes[15];
+  FileBox *boxes[15];
 
   void CreateMainWindow();
   void CreateMainFrame();
@@ -155,11 +154,14 @@ class Plotter : public TGMainFrame {
   void ClearSelection();
   void SavePlots();
   inline void CloseWindow() { gApplication->Terminate(0); }
-  void LoadSettings();
-  //void SaveSettings();
+
   void GetColours();
-  Color_t ConvertStringToColour(const char *c);
-  void SetStyle();
+
+  void SetStyle() {
+    //style->cd();
+    //gROOT->ForceStyle();
+  }
+
   void ConfigurePlotList();
   void Draw();
   void DrawEfficiency();
@@ -176,10 +178,6 @@ class Plotter : public TGMainFrame {
   Double_t x_min, x_max, y_min, y_max;
   Pixel_t pcolors[20];
   Color_t colours[20];
-  TStyle *plotter_style;
-  short marker_style;
-  float marker_size;
-  short line_width;
   Macro *macro;
   TChain *merge_chain;
 

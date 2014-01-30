@@ -4,11 +4,11 @@
 #include <TGPicture.h>
 #include <TGResourcePool.h>
 
-#include "itemsbox.h"
+#include "filebox.h"
 
-ClassImp(ItemsBox);
+ClassImp(FileBox);
 
-ItemsBox::ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t column, TString filename) :
+FileBox::FileBox(TGWindow *main, UInt_t w, UInt_t h, Int_t column, TString filename) :
   TGVerticalFrame(main, w, h, kVerticalFrame),
   m_column(column)
 {
@@ -23,7 +23,7 @@ ItemsBox::ItemsBox(TGWindow *main, UInt_t w, UInt_t h, Int_t column, TString fil
   MapWindow();
 }
 
-ItemsBox::~ItemsBox()
+FileBox::~FileBox()
 {
   m_file->Close();
   delete m_file;
@@ -31,7 +31,7 @@ ItemsBox::~ItemsBox()
   delete m_content;
 }
 
-void ItemsBox::CreateGui(TString header_text)
+void FileBox::CreateGui(TString header_text)
 {
   // header
   m_header = new TGTextEntry(this, header_text, 0);
@@ -50,8 +50,8 @@ void ItemsBox::CreateGui(TString header_text)
   m_content->Layout();
   m_content->Associate(this);
 
-  m_content->Connect("Selected(Int_t)", "ItemsBox", this, "OnItemClick(Int_t)");
-  m_content->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "ItemsBox",
+  m_content->Connect("Selected(Int_t)", "FileBox", this, "OnItemClick(Int_t)");
+  m_content->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "FileBox",
                                      this, "OnItemDoubleClick(TGFrame*, Int_t)");
 
   AddFrame(m_content,
@@ -62,7 +62,7 @@ void ItemsBox::CreateGui(TString header_text)
   MapWindow();
 }
 
-void ItemsBox::BrowseItems(TString fname)
+void FileBox::BrowseItems(TString fname)
 {
   m_items.clear();
 
@@ -120,7 +120,7 @@ void ItemsBox::BrowseItems(TString fname)
   ShowItems();
 }
 
-void ItemsBox::BrowseTree(TString name)
+void FileBox::BrowseTree(TString name)
 {
   m_items.clear();
 
@@ -147,7 +147,7 @@ void ItemsBox::BrowseTree(TString name)
 
 /** Clear and then display the current list of items in the ListBox
  */
-void ItemsBox::ShowItems()
+void FileBox::ShowItems()
 {
   m_content->RemoveAll();
 
@@ -169,7 +169,7 @@ void ItemsBox::ShowItems()
   RefreshGui();
 }
 
-void ItemsBox::Clear()
+void FileBox::Clear()
 {
   for(unsigned int i=0; i<m_items.size();i++){
     m_items[i]->SetStatus(false);
@@ -179,7 +179,7 @@ void ItemsBox::Clear()
   RefreshGui();
 }
 
-TString ItemsBox::GetFilenameFromPath(TString path)
+TString FileBox::GetFilenameFromPath(TString path)
 {
   TString filename(path);
   filename.ReplaceAll(".root","");
@@ -192,7 +192,7 @@ TString ItemsBox::GetFilenameFromPath(TString path)
 
 /** Trick to refresh the gui
  */
-void ItemsBox::RefreshGui()
+void FileBox::RefreshGui()
 {
 
   m_content->Resize(m_content->GetWidth()-1, m_content->GetHeight());
@@ -204,7 +204,7 @@ void ItemsBox::RefreshGui()
 
 /* Slots
    ---- */
-void ItemsBox::OnItemClick(Int_t id)
+void FileBox::OnItemClick(Int_t id)
 {
   Int_t k = id_to_entry(id);
 
@@ -215,7 +215,7 @@ void ItemsBox::OnItemClick(Int_t id)
   else if(m_items[k]->IsBack()) GoBack();
 }
 
-void ItemsBox::OnItemDoubleClick(TGFrame* f, Int_t btn)
+void FileBox::OnItemDoubleClick(TGFrame* f, Int_t btn)
 {
   // if (btn!=kButton1) return;
 

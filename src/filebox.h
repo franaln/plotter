@@ -1,4 +1,4 @@
-/** @file itemsbox.h
+/** @file filebox.h
 */
 
 #ifndef ITEMSBOX_H
@@ -19,11 +19,11 @@
 #include "common.h"
 #include "item.h"
 
-class ItemsBox  : public TGVerticalFrame {
+class FileBox  : public TGVerticalFrame {
 
 public:
-  ItemsBox(TGWindow *main, UInt_t, UInt_t, Int_t, TString);
-  ~ItemsBox();
+  FileBox(TGWindow *main, UInt_t, UInt_t, Int_t, TString);
+  ~FileBox();
 
   Item* GetItem(int entry) { return m_items[entry]; };
   TString GetHeaderText() { return m_header->GetText(); };
@@ -59,6 +59,6 @@ public:
   TGTextEntry *m_header;
   TGListBox   *m_content;
 
-  ClassDef(ItemsBox, 0);
+  ClassDef(FileBox, 0);
 };
 #endif

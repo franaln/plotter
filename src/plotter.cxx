@@ -1,9 +1,7 @@
-/** @file plotter.cxx
-*/
+/** @file plotter.cxx */
 
 #include "plotter.h"
 
-#include <TEnv.h>
 #include <fstream>
 #include <sstream>
 #include <math.h>
@@ -18,34 +16,12 @@
 #include <TGraph.h>
 
 #include "item.h"
-#include "itemsbox.h"
+#include "filebox.h"
 #include "obj.h"
 #include "plot.h"
 
-const char* settings_file = ".plotterrc";
 
-const char* default_colours[] = {
-  "kBlack",
-  "kRed",
-  "kBlue",
-  "kGreen",
-  "kYellow",
-  "kMagenta",
-  "kCyan",
-  "kOrange+7",
-  "kRed-4",
-  "kBlue-4",
-  "kGreen-4",
-  "kYellow-4",
-  "kMagenta-4",
-  "kCyan-4",
-  "kOrange",
-  "kRed-9",
-  "kBlue-9",
-  "kGreen-9",
-  "kYellow-9",
-  "kMagenta-9"
-};
+#include "config.h"
 
 enum MenuId {
   M_FILE_OPEN,
@@ -54,11 +30,11 @@ enum MenuId {
   M_FILE_RESET,
   M_FILE_CLOSE,
   M_FILE_EXIT,
-  M_CREATE_ADD,
-  M_CREATE_SUBSTRACT,
-  M_CREATE_EFFICIENCY,
-  M_CREATE_RATIO,
-  M_CREATE_SCALE,
+  // M_CREATE_ADD,
+  // M_CREATE_SUBSTRACT,
+  // M_CREATE_EFFICIENCY,
+  // M_CREATE_RATIO,
+  // M_CREATE_SCALE,
   M_MACRO_BEGIN,
   M_MACRO_RESET,
   M_MACRO_CREATE_ROOT,
@@ -95,26 +71,7 @@ Plotter::Plotter(std::vector<TString> filenames, bool merge) :
     ExitError();
   }
 
-  if(m_merge_mode){
-    CreateMergedFileBox();
-  }
-  else{
-    //check input files
-    TFile *fin;
-    for(UInt_t i=0; i<m_number_of_files; i++){
-      msg("Loading file: " << m_file_names[i]);
-
-      if(m_file_names[i]!="") fin = new TFile(m_file_names[i].Data(), "open");
-
-      if(fin->IsZombie()) {
-        error("El archivo existe? Es un archivo de root?");
-        ExitError();
-      }
-    }
-  }
-
   // Load settings and style. Add AtlasStyle?
-  LoadSettings();
   SetStyle();
 
   // Create Gui
@@ -179,22 +136,22 @@ void Plotter::CreateMenuBar()
   menu_macro->AddEntry("Begin", M_MACRO_BEGIN);
   menu_macro->AddEntry("Reset", M_MACRO_RESET);
   menu_macro->DisableEntry(M_MACRO_RESET);
-  menu_macro->AddEntry("Save Root macro...",   M_MACRO_CREATE_ROOT);
+  menu_macro->AddEntry("Save Root macro...", M_MACRO_CREATE_ROOT);
   menu_macro->DisableEntry(M_MACRO_CREATE_ROOT);
   menu_macro->AddEntry("Save python macro...", M_MACRO_CREATE_PYTHON);
   menu_macro->DisableEntry(M_MACRO_CREATE_PYTHON);
   menu_macro->Associate(this);
 
   menu_bar = new TGMenuBar(this, 1, 1, kHorizontalFrame);
-  menu_bar->AddPopup("&File",   menu_file, layout_menu_bar_item);
-  menu_bar->AddPopup("&View",   menu_view, layout_menu_bar_item);
-  menu_bar->AddPopup("&Macro",  menu_macro, layout_menu_bar_item);
+  menu_bar->AddPopup("&File",  menu_file, layout_menu_bar_item);
+  menu_bar->AddPopup("&View",  menu_view, layout_menu_bar_item);
+  menu_bar->AddPopup("&Macro", menu_macro, layout_menu_bar_item);
 
   AddFrame(menu_bar, layout_menu_bar);
 }
 
 /* Create frame with fileboxes.
-   Each filebox represents a file
+   Each box represents a file
 */
 void Plotter::CreateMainFrame()
 {
@@ -207,11 +164,11 @@ void Plotter::CreateMainFrame()
   }
   else if(m_number_of_files > 5 && m_number_of_files <= 10){
     n_rows = 2;
-    n_cols = int( floor(m_number_of_files/2. + 0.5) );
+    n_cols = int(floor(m_number_of_files/2. + 0.5));
   }
   else{
     n_rows = 3;
-    n_cols = int( floor(m_number_of_files/3. + 0.5) );
+    n_cols = int(floor(m_number_of_files/3. + 0.5));
   }
 
   if(m_merge_mode) {
@@ -246,7 +203,7 @@ void Plotter::CreateMainFrame()
     else if(i>=n_cols && i<2*n_cols) row = 1;
     else row = 2;
 
-    boxes[i] = new ItemsBox(frame_row[row], w, h, i, m_file_names[i]);
+    boxes[i] = new FileBox(frame_row[row], w, h, i, m_file_names[i]);
 
     boxes[i]->GetContent()->Connect("Selected(Int_t)", "Plotter", this, "OnItemClick(Int_t)");
     boxes[i]->GetContent()->GetContainer()->Connect("DoubleClicked(TGFrame*, Int_t)", "Plotter", this, "OnItemDoubleClick(TGFrame*, Int_t)");
@@ -261,8 +218,7 @@ void Plotter::CreateMainFrame()
   frame_main->AddFrame(frame_aux, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX, 2, 2, 2, 2));
 }
 
-/** Creates the frame with all the plot options and buttons
-*/
+/** Creates the frame with all the plot options and buttons */
 void Plotter::CreateOptionsFrame()
 {
   layout_buttons = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2);
@@ -277,8 +233,8 @@ void Plotter::CreateOptionsFrame()
   button_draw_ratio      = new TGTextButton(frame_options, "Draw Ratio",      0);
   button_exit            = new TGTextButton(frame_options, "Exit",            0);
 
-  button_clear_selection->SetToolTipText("Clear all selected entries.");
-  button_draw->SetToolTipText("Plot the selected histos.");
+  button_clear_selection->SetToolTipText("Clear selected entries.");
+  button_draw->SetToolTipText("Plot items.");
   button_draw_efficiency->SetToolTipText("Plot the efficiency between the two selected histos (hlast/hfirst).");
   button_draw_ratio->SetToolTipText("Plot the ratio between the selected histos wrt the first one selected (hn/hfirst).");
 
@@ -305,7 +261,7 @@ void Plotter::CreateOptionsFrame()
 
   group_options->AddFrame(check_include_ratio = new TGCheckButton(group_options, "Include Ratio", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 10, 2));
   group_options->AddFrame(check_include_diff  = new TGCheckButton(group_options, "Include Difference", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  group_options->AddFrame(check_order        = new TGCheckButton(group_options, "Keep file order", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  group_options->AddFrame(check_order         = new TGCheckButton(group_options, "Keep file order", 0), new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
   check_order->SetToolTipText("Draw the selected histos in the files/entries order instead the selection order.");
 
   frame_log = new TGCompositeFrame(group_options, 10, 10, kHorizontalFrame);
@@ -369,8 +325,7 @@ void Plotter::CreateOptionsFrame()
   frame_main->AddFrame(frame_options, new TGLayoutHints(kLHintsNormal, 0, 2, 0, 2));
 }
 
-/** creates the frame to choose the plot colours
-*/
+/** creates the frame to choose the plot colours */
 void Plotter::CreateColoursFrame()
 {
   frame_colours = new TGVerticalFrame(frame_main, 0, 0, kVerticalFrame);
@@ -525,61 +480,6 @@ void Plotter::CreateMergedFileBox()
 
   //   LoadItems();
 }
-
-void Plotter::SetStyle()
-{
-  // Plots style
-
-  plotter_style = new TStyle("Plotter", "PlotterStyle");
-
-  plotter_style->SetPalette(1); // 2D plots pallete
-  plotter_style->SetFrameFillColor(0);
-  plotter_style->SetFrameBorderSize(0);
-  plotter_style->SetFrameBorderMode(0);
-  plotter_style->SetCanvasBorderMode(0);
-  plotter_style->SetCanvasColor(0);
-  plotter_style->SetPadBorderMode(0);
-  plotter_style->SetPadColor(0);
-  plotter_style->SetStatColor(0);
-  plotter_style->SetTitleBorderSize(0);
-  plotter_style->SetTitleFillColor(0);
-  plotter_style->SetLegendBorderSize(0);
-  plotter_style->SetLegendFillColor(0);
-  plotter_style->SetEndErrorSize(0);
-  plotter_style->SetOptTitle(0);
-
-  plotter_style->SetStatBorderSize(1);
-  plotter_style->SetPaperSize(20,26);
-  plotter_style->SetPadTopMargin(0.05);
-  plotter_style->SetPadRightMargin(0.05);
-  plotter_style->SetPadBottomMargin(0.16);
-  plotter_style->SetPadLeftMargin(0.16);
-  plotter_style->SetTitleXOffset(1.4);
-  plotter_style->SetTitleYOffset(1.4);
-
-  //Fonts
-  plotter_style->SetTextFont(42);
-  plotter_style->SetTextSize(0.05);
-  plotter_style->SetLabelFont(42,"x");
-  plotter_style->SetTitleFont(42,"x");
-  plotter_style->SetLabelFont(42,"y");
-  plotter_style->SetTitleFont(42,"y");
-  plotter_style->SetLabelFont(42,"z");
-  plotter_style->SetTitleFont(42,"z");
-  plotter_style->SetLabelSize(0.05,"x");
-  plotter_style->SetTitleSize(0.05,"x");
-  plotter_style->SetLabelSize(0.05,"y");
-  plotter_style->SetTitleSize(0.05,"y");
-  plotter_style->SetLabelSize(0.05,"z");
-  plotter_style->SetTitleSize(0.05,"z");
-
-  plotter_style->SetPadTickX(1);
-  plotter_style->SetPadTickY(1);
-
-  plotter_style->cd();
-  gROOT->ForceStyle();
-}
-
 
 void Plotter::GetColours()
 {
@@ -740,88 +640,18 @@ void Plotter::CreateMacro(OutputFormat type)
 /** Load configuration values
     Use .plotterrc if exists, or default values otherwise
 */
-void Plotter::LoadSettings()
-{
-  TEnv env(settings_file);
-
-  for(Int_t k=0; k<20; k++){
-    char temp[50]; sprintf(temp, "Colour%d", k);
-    Color_t ctemp = ConvertStringToColour(env.GetValue(temp, default_colours[k]));
-    pcolors[k] = TColor::Number2Pixel(ctemp);
-  }
-
-  //Style
-  marker_size  = 0.8; //env.GetValue("MarkerSize", 0.8);
-  marker_style = 20; //env.GetValue("MarkerStyle", 20);
-  line_width   = 1; //env.GetValue("LineWidth", 1);
-
-  return;
-}
-
-// void Plotter::SaveSettings()
+// void Plotter::LoadSettings()
 // {
-//   // Save colours in .plotterrc. Por ahora no lo uso
+// w  for(Int_t k=0; k<20; k++){
+//     char temp[50]; sprintf(temp, "Colour%d", k);
+//     Color_t ctemp = ConvertStringToColour(env.GetValue(temp, default_colours[k]));
+//     pcolors[k] = TColor::Number2Pixel(ctemp);
+//   }
 
-//   // TEnv env(settingsFile);
-//   // for(Int_t k=0; k<20; k++){
-//   //   pcolors[k] = colorselect[k]->GetColor();
-//   //   char temp[50]; sprintf(temp, "Colour%d", k);
-//   //   env.SetValue(temp, TColor::PixelAsHexString(pcolors[k]) );
-//   // }
-//   // env.SaveLevel(kEnvUser);
 
 //   return;
 // }
 
-/** Convert string colour to color_t colour.
-    Buscar si hay una forma mejor de hacer esto :/
-*/
-Color_t Plotter::ConvertStringToColour(const char *c)
-{
-  TString str(c);
-  Color_t colour;
-
-  if(str.Contains("kBlack"))
-    colour = kBlack;
-  else if(str.Contains("kRed"))
-    colour = kRed;
-  else if(str.Contains("kBlue"))
-    colour = kBlue;
-  else if(str.Contains("kGreen"))
-    colour = kGreen;
-  else if(str.Contains("kYellow"))
-    colour = kYellow;
-  else if(str.Contains("kMagenta"))
-    colour = kMagenta;
-  else if(str.Contains("kCyan"))
-    colour = kCyan;
-  else if(str.Contains("kOrange"))
-    colour = kOrange;
-  else if(str.Contains("kAzure"))
-    colour = kAzure;
-  else if(str.Contains("kPink"))
-    colour = kPink;
-  else if(str.Contains("kSpring"))
-    colour = kSpring;
-  else if(str.Contains("kTeal"))
-    colour = kTeal;
-  else if(str.Contains("kViolet"))
-    colour = kViolet;
-  else if(str.Contains("kGray"))
-    colour = kGray;
-
-  if(str.Contains("+")){
-    TString index = str(str.Index("+")+1, str.Length());
-    colour += index.Atoi();
-  }
-
-  if(str.Contains("-")){
-    TString index = str(str.Index("-")+1, str.Length());
-    colour -= index.Atoi();
-  }
-
-  return colour;
-}
 
 
 /* Slots

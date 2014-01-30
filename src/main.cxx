@@ -17,20 +17,19 @@ void show_usage()
 {
   std::cout << NAME << " " << VERSION << std::endl;
   std::cout << std::endl;
-  std::cout << "Usage: " << NAME << " [options] file1.root file2.root file3.root ..." << std::endl;
+  std::cout << "Usage: " << NAME << " file1.root file2.root file3.root ..." << std::endl;
   std::cout << std::endl;
 }
 
 int main(int argc, char **argv)
 {
-
   if(gROOT->IsBatch()) {
     fprintf(stderr, "%s: cannot run in batch mode\n", argv[0]);
     return 1;
   }
 
   // If no arguments: show version/usage
-  if(argc < 2 || strcmp("-h",argv[1])==0 || strcmp("--help",argv[1])==0 ){
+  if(argc < 2 || strcmp("-h",argv[1])==0 || strcmp("--help",argv[1])==0){
     show_usage();
     return 1;
   }
@@ -39,14 +38,14 @@ int main(int argc, char **argv)
 
   // Check option merge
   bool merge = false;
-  if ( strcmp(argv[argpos], "--merge")==0 || strcmp(argv[argpos], "-m")==0) {
-    merge = true;
-    argpos++;
-    if(argc <= argpos) {
-      show_usage();
-      return 1;
-    }
-  }
+  // if ( strcmp(argv[argpos], "--merge")==0 || strcmp(argv[argpos], "-m")==0) {
+  //   merge = true;
+  //   argpos++;
+  //   if(argc <= argpos) {
+  //     show_usage();
+  //     return 1;
+  //   }
+  // }
 
   // Get files from args
   std::vector<TString> files;
