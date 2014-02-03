@@ -37,7 +37,7 @@ class Item {
   Int_t     m_id;
 
  public:
-  Item(Int_t file, Int_t entry, TString name, TString title, ItemType type);
+  Item(Int_t entry, TString name, TString title, ItemType type);
 
   TString GetName() { return m_name; }
   TString GetTitle() { return m_title; }
@@ -61,5 +61,30 @@ class Item {
   void ToggleStatus() { m_status = m_status ? false : true; }
   void SetStatus(bool st) { m_status = st; }
 };
+
+
+class ParentItem : public Item {
+
+ private:
+  std::vector<Item*> m_items;
+
+ public:
+  ParentItem(Int_t entry, TString name, TString title, ItemType type) : Item(entry, name, title, type) { m_items.clear(); };
+  ~ParentItem();
+
+  bool IsOpen() { return GetStatus(); }
+  unsigned int GetN() { return m_items.size(); }
+  void AddItem(Item* it) { m_items.push_back(it); }
+  Item* GetItem(int index) { return m_items[index]; }
+
+  Item* GetItemFromId(int id) {
+    for(unsigned int k=0; k<m_items.size(); k++){
+      if(m_items[k]->GetId() == id) return m_items[k];
+      else continue;
+    }
+  }
+
+};
+
 
 #endif

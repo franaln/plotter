@@ -2,8 +2,7 @@
 
 #include "item.h"
 
-Item::Item(Int_t file, Int_t entry, TString name, TString title, ItemType type) :
-  m_file(file),
+Item::Item(Int_t entry, TString name, TString title, ItemType type) :
   m_entry(entry),
   m_name(name),
   m_title(title),
@@ -14,7 +13,9 @@ Item::Item(Int_t file, Int_t entry, TString name, TString title, ItemType type) 
   // Calcula id
   // file = id/100000-1
   // entry = id-((id/100000)*100000)
-  m_id = 100000 * (m_file + 1) + m_entry;
+  //m_id = 100000 * (m_file + 1) + m_entry;
+
+  m_id = m_entry;
 
 }
 

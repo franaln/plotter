@@ -1,8 +1,7 @@
-/** @file filebox.h
-*/
+/** @file filebox.h */
 
-#ifndef ITEMSBOX_H
-#define ITEMSBOX_H
+#ifndef FILEBOX_H
+#define FILEBOX_H
 
 #include <iostream>
 
@@ -22,10 +21,10 @@
 class FileBox  : public TGVerticalFrame {
 
 public:
-  FileBox(TGWindow *main, UInt_t, UInt_t, Int_t, TString);
+  FileBox(TGWindow *main, UInt_t, UInt_t, TString);
   ~FileBox();
 
-  Item* GetItem(int entry) { return m_items[entry]; };
+  Item* GetItem(int entry) { return parent->GetItem(entry); };
   TString GetHeaderText() { return m_header->GetText(); };
   TGListBox* GetContent() { return m_content; };
   TFile* GetFile() { return m_file; };
@@ -34,7 +33,7 @@ public:
 
   void Clear();
 
-  //slot
+  //slots
   void OnItemDoubleClick(TGFrame*, Int_t);
   void OnItemClick(Int_t);
 
@@ -42,16 +41,18 @@ public:
   void CreateGui(TString);
   void RefreshGui();
 
-  void BrowseItems(TString fname="");
-  void BrowseTree(TString name);
-  void GoBack() { BrowseItems(last_path); }
-  void ShowItems();
-  TString GetFilenameFromPath(TString);
+  void BrowseDir(ParentItem*);
+  void BrowseTree(ParentItem*);
 
-  Int_t m_column;;
+  void ShowItems();
+  void OpenItem(int);
+  void CloseItem(int);
 
   TFile *m_file;
-  std::vector<Item*> m_items;
+  //  std::vector<Item*> m_items;
+
+  ParentItem *parent;
+  int entry;
 
   TString last_path, current_path;
 

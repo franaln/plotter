@@ -1,5 +1,4 @@
-/** @file itemsbox.cxx
-*/
+/** @file itemsbox.cxx */
 
 #include <TGPicture.h>
 #include <TGResourcePool.h>
@@ -8,15 +7,26 @@
 
 ClassImp(FileBox);
 
-FileBox::FileBox(TGWindow *main, UInt_t w, UInt_t h, Int_t column, TString filename) :
+FileBox::FileBox(TGWindow *main, UInt_t w, UInt_t h, TString filename) :
   TGVerticalFrame(main, w, h, kVerticalFrame),
-  m_column(column)
+  entry(0)
 {
   SetCleanup(kDeepCleanup);
 
   m_file = new TFile(filename, "open");
-  CreateGui(GetFilenameFromPath(filename));
-  BrowseItems();
+
+  filename.ReplaceAll(".root","");
+  while(filename.Contains("/")){
+    filename = filename(filename.Index("/")+1, filename.Length());
+  }
+
+  CreateGui(filename);
+
+  parent = new ParentItem(0, "", "", Dir);
+
+  BrowseDir(parent);
+
+  ShowItems();
 
   MapSubwindows();
   Resize(w, h);
@@ -31,8 +41,12 @@ FileBox::~FileBox()
   delete m_content;
 }
 
-void FileBox::CreateGui(TString header_text)
+void FileBox::CreateGui(TString filename)
 {
+  TString header_text;
+
+  header_text = (filename.Length() <= 50) ? filename : filename(0, 50);
+
   // header
   m_header = new TGTextEntry(this, header_text, 0);
   AddFrame(m_header, new TGLayoutHints(kLHintsLeft | kLHintsTop |
@@ -62,20 +76,12 @@ void FileBox::CreateGui(TString header_text)
   MapWindow();
 }
 
-void FileBox::BrowseItems(TString fname)
+void FileBox::BrowseDir(ParentItem* pt)
 {
-  m_items.clear();
-
-  int entry = 0;
   last_path = current_path;
-  current_path = fname;
+  current_path = pt->GetName();;
 
-  if(!fname.EqualTo("")){
-    m_items.push_back(new Item(m_column, 0, "..", "..", Back));
-    entry++;
-  }
-
-  TDirectory *dir = m_file->GetDirectory(fname);
+  TDirectory *dir = m_file->GetDirectory(pt->GetName());
 
   TIter next(dir->GetListOfKeys());
   TKey *key;
@@ -88,131 +94,142 @@ void FileBox::BrowseItems(TString fname)
     name = obj->GetName();
     title = obj->GetTitle();
 
-    if(name.EqualTo("")) name = obj->GetTitle();
+    if(name.IsNull()) name = obj->GetTitle();
 
     if(key->IsFolder()){
       if(obj->InheritsFrom("TTree")){
-        Item *it = new Item(m_column, entry, name, title, Tree);
-        m_items.push_back(it);
+        ParentItem *it = new ParentItem(entry, name, title, Tree);
+        pt->AddItem(it);
+        entry++;
+        BrowseTree(it);
+
       }
       else{
-        Item *it = new Item(m_column, entry, name, title, Dir);
-        m_items.push_back(it);
+        ParentItem *it = new ParentItem(entry, name, title, Dir);
+        pt->AddItem(it);
+        entry++;
+        BrowseDir(it);
       }
     }
     else if(obj->InheritsFrom("TH1")) {
       Item *it;
       if(obj->InheritsFrom("TH3"))
-        it = new Item(m_column, entry, name, title, Hist3D);
+        it = new Item(entry, name, title, Hist3D);
       else if(obj->InheritsFrom("TH2"))
-        it = new Item(m_column, entry, name, title, Hist2D);
+        it = new Item(entry, name, title, Hist2D);
       else
-        it = new Item(m_column, entry, name, title, Hist1D);
-      m_items.push_back(it);
+        it = new Item(entry, name, title, Hist1D);
+      pt->AddItem(it);
+      entry++;
     }
     else if (obj->InheritsFrom("TGraph")) {
-      Item *it = new Item(m_column, entry, name, title, Graph);
-      m_items.push_back(it);
+      Item *it = new Item(entry, name, title, Graph);
+      pt->AddItem(it);
+      entry++;
     }
-    entry++;
+
   }
 
-  ShowItems();
 }
 
-void FileBox::BrowseTree(TString name)
+void FileBox::BrowseTree(ParentItem *pt)
 {
-  m_items.clear();
-
-  last_path = current_path;
-  current_path = name;
-
-  Item *it = new Item(m_column, 0, "..", "..", Back);
-  m_items.push_back(it);
-
-  TTree *t = new TTree(name, "");
-  m_file->GetObject(name, t);
+  TTree *t = new TTree(pt->GetName(), "");
+  m_file->GetObject(pt->GetName(), t);
 
   TObjArray *l = t->GetListOfBranches();
   int nbranches = l->GetSize();
   for(Int_t k=0; k<nbranches; k++){
     TObject *branch = l->At(k);
     if(!branch) continue;
-    Item *it = new Item(m_column, k+1, branch->GetName(), branch->GetTitle(), Branch);
-    m_items.push_back(it);
+    Item *it = new Item(entry, branch->GetName(), branch->GetTitle(), Branch);
+    pt->AddItem(it);
+    entry++;
   }
 
-  ShowItems();
 }
 
-/** Clear and then display the current list of items in the ListBox
- */
+/** Clear and then display the list of items in the ListBox  */
 void FileBox::ShowItems()
 {
   m_content->RemoveAll();
 
-  //const TGPicture *iconpic;
-
-  for(unsigned int k=0; k<m_items.size(); k++){
-
-
+  for(unsigned int k=0; k<parent->GetN(); k++){
     TGIconLBEntry *it = new TGIconLBEntry(m_content->GetContainer(),
-                                          m_items[k]->GetId(),
-                                          m_items[k]->GetText(),
-                                          gClient->GetPicture(m_items[k]->GetIcon()),
+                                          parent->GetItem(k)->GetId(),
+                                          parent->GetItem(k)->GetText(),
+                                          gClient->GetPicture(parent->GetItem(k)->GetIcon()),
                                           0, kVerticalFrame,
                                           GetWhitePixel());
-
     m_content->AddEntry(it, new TGLayoutHints(kLHintsExpandX));
   }
 
   RefreshGui();
 }
 
+
+void FileBox::OpenItem(int id)
+{
+  ParentItem *pt = (ParentItem*)parent->GetItemFromId(id);
+
+  for(unsigned int k=0; k<pt->GetN(); k++){
+    TGIconLBEntry *it = new TGIconLBEntry(m_content->GetContainer(),
+                                          pt->GetItem(k)->GetId(),
+                                          pt->GetItem(k)->GetText(),
+                                          gClient->GetPicture(pt->GetItem(k)->GetIcon()),
+                                          0, kVerticalFrame,
+                                          GetWhitePixel());
+
+    m_content->InsertEntry(it, new TGLayoutHints(kLHintsExpandX), id+k);
+  }
+
+  pt->ToggleStatus();
+
+  RefreshGui();
+}
+
+void FileBox::CloseItem(int id)
+{
+  ParentItem *pt = (ParentItem*) parent->GetItemFromId(id);
+
+  for(unsigned int k=0; k<pt->GetN(); k++){
+    m_content->RemoveEntry(id+k+1);
+  }
+
+  pt->ToggleStatus();
+  RefreshGui();
+}
+
 void FileBox::Clear()
 {
-  for(unsigned int i=0; i<m_items.size();i++){
-    m_items[i]->SetStatus(false);
-    m_content->GetEntry(m_items[i]->GetId())->Activate(false);
+  for(unsigned int i=0; i<parent->GetN();i++){
+    parent->GetItem(i)->SetStatus(false);
+    m_content->GetEntry(parent->GetItem(i)->GetId())->Activate(false);
   }
 
   RefreshGui();
 }
 
-TString FileBox::GetFilenameFromPath(TString path)
-{
-  TString filename(path);
-  filename.ReplaceAll(".root","");
-  while(filename.Contains("/")){
-    filename = filename(filename.Index("/")+1, filename.Length());
-  }
-
-  return (filename.Length() <= 50) ? filename : filename = filename(0, 50);
-}
-
-/** Trick to refresh the gui
- */
+/** Trick to refresh the gui  */
 void FileBox::RefreshGui()
 {
-
   m_content->Resize(m_content->GetWidth()-1, m_content->GetHeight());
   m_content->Resize(m_content->GetWidth()+1, m_content->GetHeight());
   return;
 }
 
 
-
 /* Slots
    ---- */
 void FileBox::OnItemClick(Int_t id)
 {
-  Int_t k = id_to_entry(id);
+  //  if(parent->GetItem(k)->IsPlotable()) return;
 
-  if(m_items[k]->IsPlotable()) return;
+  if(parent->GetItemFromId(id)->IsTree() || parent->GetItemFromId(id)->IsDir()){
+    if(((ParentItem*)parent->GetItemFromId(id))->IsOpen()) CloseItem(id);
+    else OpenItem(id);
+  }
 
-  if(m_items[k]->IsTree())      BrowseTree( m_items[k]->GetName() );
-  else if(m_items[k]->IsDir())  BrowseItems( m_items[k]->GetName() );
-  else if(m_items[k]->IsBack()) GoBack();
 }
 
 void FileBox::OnItemDoubleClick(TGFrame* f, Int_t btn)
